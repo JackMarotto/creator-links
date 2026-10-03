@@ -209,7 +209,7 @@
         <div id="pubSocialsRow" class="flex flex-wrap items-center justify-center gap-3 my-5 w-full"></div>
         <div id="pubLinksContainer" class="w-full flex flex-col gap-3.5 my-2"></div>
 
-        <footer class="mt-auto pt-8 pb-2 text-center text-xs text-zinc-500 font-medium">
+        <footer id="pubFooter" class="mt-auto pt-8 pb-2 text-center text-xs text-zinc-500 font-medium">
           <p class="flex items-center justify-center gap-1">
             <span>Criado com</span>
             <i class="fa-solid fa-heart text-purple-500 text-[10px]"></i>
@@ -280,7 +280,7 @@
                 <div id="prevSocialsRow" class="flex flex-wrap items-center justify-center gap-2 my-3.5 w-full"></div>
                 <div id="prevLinksContainer" class="w-full flex flex-col gap-2.5 my-1"></div>
 
-                <div class="mt-6 text-[10px] text-zinc-600 font-medium">oMarotto Hub</div>
+                <div id="prevFooter" class="mt-6 text-[10px] font-medium text-center"></div>
               </div>
             </div>
 
@@ -397,6 +397,24 @@
             <div>
               <label class="block text-xs font-medium text-zinc-400 mb-1">Biografia / Descrição</label>
               <textarea id="cfgBio" rows="2" oninput="dispararAtualizacaoGeral()" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-purple-500 transition"></textarea>
+            </div>
+            <div class="mt-3 flex flex-wrap items-end gap-4">
+              <div>
+                <label class="block text-xs font-medium text-zinc-400 mb-1">Cor da Biografia</label>
+                <input type="color" id="cfgBioColor" oninput="dispararAtualizacaoGeral()" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 p-0">
+              </div>
+              <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-medium text-zinc-400 mb-1">Texto do Rodapé</label>
+                <input type="text" id="cfgFooterText" oninput="dispararAtualizacaoGeral()" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition" placeholder="© 2026 oMarotto · Todos os direitos reservados.">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-400 mb-1">Cor do Rodapé</label>
+                <input type="color" id="cfgFooterColor" oninput="dispararAtualizacaoGeral()" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 p-0">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-400 mb-1">Mostrar Rodapé</label>
+                <button id="btnShowFooter" onclick="alternarShowFooter()" class="w-9 h-8 rounded-lg border border-zinc-800 bg-zinc-950 flex items-center justify-center transition"></button>
+              </div>
             </div>
           </div>
 
@@ -622,6 +640,12 @@
       bio: "Criador de conteúdo, Gamer & Desenvolvedor de Widgets.\nAcompanhe minhas lives e confira os projetos nos links abaixo!",
       statusTag: "🔴 AO VIVO NA TWITCH",
       primaryColor: "#9146FF",
+      // Cores dos textos das três superfícies (página pública, preview e export).
+      // Footer: `footerText` é o texto; `footerColor` a cor; `showFooter` liga/desliga.
+      bioColor: "#a1a1aa",
+      footerText: "",
+      footerColor: "#52525b",
+      showFooter: true,
       bgColor: "#0e0e10",
       bgType: "solid",
       bgColor2: "#1a1030",
@@ -744,6 +768,9 @@
       if (g('cfgAutoDetectLive')) appConfig.autoDetectLive = g('cfgAutoDetectLive').value === 'true';
       if (g('cfgAvatarUrl')) appConfig.avatarUrl = g('cfgAvatarUrl').value;
       if (g('cfgBio')) appConfig.bio = g('cfgBio').value;
+      if (g('cfgBioColor')) appConfig.bioColor = g('cfgBioColor').value;
+      if (g('cfgFooterText')) appConfig.footerText = g('cfgFooterText').value;
+      if (g('cfgFooterColor')) appConfig.footerColor = g('cfgFooterColor').value;
       if (g('cfgStatusTag')) appConfig.statusTag = g('cfgStatusTag').value;
       if (g('cfgPrimaryColor')) {
         appConfig.primaryColor = g('cfgPrimaryColor').value;
@@ -809,8 +836,19 @@
         g('prevUsername').style.color = primary;
       }
 
-      if (g('pubBio')) g('pubBio').innerText = appConfig.bio || "";
-      if (g('prevBio')) g('prevBio').innerText = appConfig.bio || "";
+      if (g('pubBio')) { g('pubBio').innerText = appConfig.bio || ""; g('pubBio').style.color = appConfig.bioColor || '#a1a1aa'; }
+      if (g('prevBio')) { g('prevBio').innerText = appConfig.bio || ""; g('prevBio').style.color = appConfig.bioColor || '#a1a1aa'; }
+      // Rodapé: mesmo texto e cor nas 3 superfícies (página pública, preview e export).
+      if (g('pubFooter')) {
+        g('pubFooter').innerText = getFooterText(appConfig);
+        g('pubFooter').style.color = appConfig.footerColor || '#52525b';
+        g('pubFooter').style.display = appConfig.showFooter !== false ? '' : 'none';
+      }
+      if (g('prevFooter')) {
+        g('prevFooter').innerText = getFooterText(appConfig);
+        g('prevFooter').style.color = appConfig.footerColor || '#52525b';
+        g('prevFooter').style.display = appConfig.showFooter !== false ? '' : 'none';
+      }
 
       const avatarSrc = normalizarUrlImagem(appConfig.avatarUrl, 'Bio and pannel/Fotos/foto-5.png');
       if (g('pubAvatarImg')) g('pubAvatarImg').src = avatarSrc;
@@ -861,7 +899,10 @@
           a.href = soc.url;
           a.target = "_blank";
           a.rel = "noopener noreferrer";
-          a.className = "w-10 h-10 rounded-xl bg-zinc-900/90 border border-zinc-800 hover:border-purple-500/70 hover:bg-purple-600/20 text-zinc-300 hover:text-white flex items-center justify-center text-lg transition duration-200 transform hover:-translate-y-0.5 shadow-sm";
+          const s = getEstiloSocialInline(appConfig, 42, soc.hoverColor);
+          a.setAttribute('style', s.estilo);
+          a.setAttribute('onmouseover', s.over);
+          a.setAttribute('onmouseout', s.out);
           a.title = soc.name;
           a.innerHTML = renderizarIcone(soc.icon);
           pubContainer.appendChild(a);
@@ -871,7 +912,10 @@
           const aPrev = document.createElement('a');
           aPrev.href = soc.url;
           aPrev.target = "_blank";
-          aPrev.className = "w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center text-xs shadow-sm";
+          const s = getEstiloSocialInline(appConfig, 32, soc.hoverColor);
+          aPrev.setAttribute('style', s.estilo);
+          aPrev.setAttribute('onmouseover', s.over);
+          aPrev.setAttribute('onmouseout', s.out);
           aPrev.innerHTML = renderizarIcone(soc.icon);
           prevContainer.appendChild(aPrev);
         }
@@ -1257,10 +1301,10 @@
     // para que o index.html gerado respeite os mesmos controles do painel.
     const BOTAO_RAIO_PX = { "rounded-full": "9999px", "rounded-3xl": "24px", "rounded-2xl": "16px", "rounded-xl": "12px", "rounded-lg": "8px", "rounded-md": "6px" };
 
-    function getEstiloBotaoInline(isHighlight) {
+    function getEstiloBotaoInline(isHighlight, corBorda) {
       const raio = BOTAO_RAIO_PX[appConfig.buttonRadius] || "16px";
       const estilo = appConfig.buttonStyle || "glass";
-      const borda = isHighlight ? `2px solid ${appConfig.primaryColor || '#9146ff'}` : "1px solid #27272a";
+      const borda = isHighlight ? `2px solid ${corBorda || appConfig.primaryColor || '#9146ff'}` : "1px solid #27272a";
       let bg, cor, sombra;
       if (estilo === 'solid')      { bg = isHighlight ? appConfig.primaryColor : "#27272a"; cor = "#fff"; sombra = "0 1px 3px rgba(0,0,0,.5)"; }
       else if (estilo === 'outline'){ bg = "transparent";            cor = isHighlight ? "#c4b5fd" : "#d4d4d8"; sombra = "none"; }
@@ -1270,6 +1314,26 @@
       const vidro = (estilo === 'glass' && appConfig.bgType && appConfig.bgType !== 'solid')
         ? "backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);" : "";
       return `border-radius: ${raio}; background: ${bg}; border: ${borda}; color: ${cor}; box-shadow: ${sombra}; ${vidro}`;
+    }
+
+    // Fonte única de verdade do estilo dos ícones sociais. Usada pelas 3 superfícies
+    // (canvas público, preview do celular e index.html exportado) para que o hover seja
+    // idêntico em todas. `cfg` é explícito porque o export precisa do config do HTML
+    // gerado, não do estado do painel. `socialHoverColor` é a cor de destaque escolhida
+    // pelo usuário; sem ela, cai na primaryColor.
+    // `hoverCor` é a cor daquele ícone específico (campo `soc.hoverColor`); vazio
+    // significa "seguir a primaryColor". Assim cada rede tem o seu próprio hover.
+    function getEstiloSocialInline(cfg = appConfig, tam = 42, hoverCor = '') {
+      const cor = hoverCor || (cfg && cfg.primaryColor) || '#9146ff';
+      const rgb = hexToRgbTriplet(cor);
+      const raio = tam === 42 ? 12 : 8;
+      const fonte = tam === 42 ? 18 : 14;
+      const estilo = `width: ${tam}px; height: ${tam}px; border-radius: ${raio}px; background: #18181b; border: 1px solid #27272a; color: #d4d4d8; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-size: ${fonte}px; transition: 0.2s;`;
+      // `over`/`out` são corpos de handler (nomes de estilo do CSS). O DOM recebe os
+      // dois separados; o export os serializa como atributos onmouseover/onmouseout.
+      const over = `this.style.background='rgba(${rgb}, 0.2)'; this.style.borderColor='${cor}'; this.style.color='#fff'; this.style.transform='translateY(-2px)';`;
+      const out  = `this.style.background='#18181b'; this.style.borderColor='#27272a'; this.style.color='#d4d4d8'; this.style.transform='translateY(0)';`;
+      return { estilo, over, out };
     }
 
     function getEstiloBotaoClasses(isHighlight, isLiveTwitch, isMockup = false) {
@@ -1450,6 +1514,10 @@
       s('cfgAutoDetectLive', appConfig.autoDetectLive ? "true" : "false");
       s('cfgAvatarUrl', appConfig.avatarUrl || "");
       s('cfgBio', appConfig.bio || "");
+      s('cfgBioColor', appConfig.bioColor || "#a1a1aa");
+      s('cfgFooterText', appConfig.footerText || "");
+      s('cfgFooterColor', appConfig.footerColor || "#52525b");
+      atualizarBotaoShowFooter();
       s('cfgStatusTag', appConfig.statusTag || "🔴 AO VIVO NA TWITCH");
       s('cfgPrimaryColor', appConfig.primaryColor || "#9146FF");
       if (document.getElementById('cfgPrimaryColorHex')) document.getElementById('cfgPrimaryColorHex').innerText = appConfig.primaryColor || "#9146FF";
@@ -1503,6 +1571,14 @@
             <button onclick="excluirRedeSocial(${idx})" title="Excluir Rede" class="p-1.5 text-zinc-500 hover:text-red-400 rounded hover:bg-red-950/30 transition flex-shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
           </div>
           <input type="text" value="${escapeHtml(soc.url)}" oninput="atualizarRedeCampo(${idx}, 'url', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-purple-500" placeholder="https://...">
+          <div class="flex items-center gap-2">
+            <label class="text-[10px] text-zinc-500 shrink-0">Hover</label>
+            <input type="color" id="hoverCor_${escapeHtml(soc.id)}" value="${escapeHtml(soc.hoverColor || appConfig.primaryColor || '#9146ff')}" oninput="definirHoverSocial('${escapeHtml(soc.id)}', this.value)" class="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 p-0 shrink-0" title="Cor deste ícone ao passar o mouse">
+            <button onclick="definirHoverSocial('${escapeHtml(soc.id)}', '')" title="Voltar a usar a cor principal" class="w-7 h-7 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-white hover:border-zinc-600 flex items-center justify-center transition shrink-0">
+              <i class="fa-solid fa-rotate-left text-[9px]"></i>
+            </button>
+            <span class="text-[10px] text-zinc-600 truncate">${soc.hoverColor ? 'Personalizada' : 'Usa a cor principal'}</span>
+          </div>
         `;
         container.appendChild(item);
       });
@@ -1653,6 +1729,17 @@
       c.bgPatternScale = sanearEscala(c.bgPatternScale);
       c.bgSpeed = sanearVelocidade(c.bgSpeed);
 
+      // Cores/texto do rodapé e da bio: ausentes em configs antigos → herdam o default.
+      if (typeof c.bioColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(c.bioColor)) c.bioColor = DEFAULT_CONFIG.bioColor;
+      // Vazio = seguir a primaryColor; preenchido = override do hover DESTE ícone.
+      (c.socials || []).forEach(soc => {
+        if (typeof soc.hoverColor !== 'string') soc.hoverColor = "";
+        else if (soc.hoverColor && !/^#[0-9a-f]{6}$/i.test(soc.hoverColor)) soc.hoverColor = "";
+      });
+      if (typeof c.footerColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(c.footerColor)) c.footerColor = DEFAULT_CONFIG.footerColor;
+      if (typeof c.footerText !== 'string') c.footerText = "";
+      if (typeof c.showFooter !== 'boolean') c.showFooter = DEFAULT_CONFIG.showFooter;
+
       (c.links || []).forEach(item => {
         if (!('glowColor' in item)) item.glowColor = "";
         if (!('imageUrl' in item)) item.imageUrl = "";
@@ -1661,6 +1748,44 @@
         if (!['cover', 'contain'].includes(item.imageFit)) item.imageFit = 'cover';
       });
       return c;
+    }
+
+    function alternarShowFooter() {
+      appConfig.showFooter = !appConfig.showFooter;
+      salvarConfiguracao();
+      atualizarBotaoShowFooter();
+      dispararAtualizacaoGeral();
+    }
+
+    function atualizarBotaoShowFooter() {
+      const btn = document.getElementById('btnShowFooter');
+      if (!btn) return;
+      const on = appConfig.showFooter !== false;
+      btn.className = `w-9 h-8 rounded-lg border flex items-center justify-center transition ${
+        on ? 'border-purple-500/50 bg-purple-500/15 text-purple-400' : 'border-zinc-800 bg-zinc-950 text-zinc-600'}`;
+      btn.innerHTML = `<i class="fa-solid ${on ? 'fa-eye' : 'fa-eye-slash'} text-[11px]"></i>`;
+      btn.title = on ? 'Rodapé visível — clique para ocultar' : 'Rodapé oculto — clique para mostrar';
+    }
+
+    // Aplica (ou limpa) a cor de hover de UM ícone social. `cor` vazia = usar a
+    // primaryColor. O input mostra sempre a cor efetiva para não ficar vazio.
+    function definirHoverSocial(id, cor) {
+      const soc = appConfig.socials.find(s => s.id === id);
+      if (!soc) return;
+      soc.hoverColor = cor || "";
+      salvarConfiguracao();
+      const inp = document.getElementById('hoverCor_' + id);
+      if (inp) inp.value = soc.hoverColor || appConfig.primaryColor || '#9146ff';
+      const hint = inp && inp.parentElement.querySelector('span');
+      if (hint) hint.textContent = soc.hoverColor ? 'Personalizada' : 'Usa a cor principal';
+      dispararAtualizacaoGeral();
+    }
+
+    function getFooterText(cfg) {
+      const t = (cfg.footerText || '').trim();
+      if (t) return t;
+      // Sem texto customizado, mantém o automático que já existia no export.
+      return `© ${new Date().getFullYear()} ${cfg.displayName} · Todos os direitos reservados.`;
     }
 
     function carregarConfiguracao() {
@@ -1908,10 +2033,10 @@
 
       let socialsHtml = '';
       (cfg.socials || []).filter(s => s.active && s.url).forEach(s => {
-        socialsHtml += `
-      <a href="${escapeHtml(s.url)}" title="${escapeHtml(s.name)}" target="_blank" rel="noopener noreferrer" style="width: 42px; height: 42px; border-radius: 12px; background: #18181b; border: 1px solid #27272a; color: #d4d4d8; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px; transition: 0.2s;" onmouseover="this.style.color='#fff'; this.style.borderColor='${cfg.primaryColor}'" onmouseout="this.style.color='#d4d4d8'; this.style.borderColor='#27272a'">
+        socialsHtml += (() => { const v = getEstiloSocialInline(cfg, 42, s.hoverColor); return `
+      <a href="${escapeHtml(s.url)}" title="${escapeHtml(s.name)}" target="_blank" rel="noopener noreferrer" style="${v.estilo}" onmouseover="${v.over}" onmouseout="${v.out}">
         ${renderizarIcone(s.icon)}
-      </a>`;
+      </a>`; })();
       });
 
       let linksHtml = '';
@@ -1964,7 +2089,7 @@
           : '';
 
         linksHtml += `
-      <a id="${isTwitch ? 'twitchMainBtn' : ''}" href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      <a id="${isTwitch ? 'twitchMainBtn' : ''}" href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         ${conteudo}
       </a>`;
       });
@@ -2009,11 +2134,11 @@
     <img src="${normalizarUrlImagem(cfg.avatarUrl, 'Bio and pannel/Fotos/foto-5.png')}" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/110x110/18181b/9146FF?text=OM'" class="avatar">
     <h1 style="font-size: 22px; font-weight: 800;">${escapeHtml(cfg.displayName)}</h1>
     <p style="font-size: 14px; font-weight: 600; color: ${cfg.primaryColor}; margin-top: 4px;">${escapeHtml(cfg.username)}</p>
-    <p style="font-size: 13px; color: #a1a1aa; max-width: 420px; margin: 12px 0 20px 0; line-height: 1.5; white-space: pre-line;">${escapeHtml(cfg.bio)}</p>
+    <p style="font-size: 13px; color: ${escapeHtml(cfg.bioColor || '#a1a1aa')}; max-width: 420px; margin: 12px 0 20px 0; line-height: 1.5; white-space: pre-line;">${escapeHtml(cfg.bio)}</p>
 
     <div style="display: flex; gap: 10px; margin-bottom: 24px;">${socialsHtml}</div>
     <div style="width: 100%; display: flex; flex-direction: column; gap: 12px;">${linksHtml}</div>
-    <footer style="margin-top: 40px; font-size: 11px; color: #52525b;">© ${new Date().getFullYear()} ${escapeHtml(cfg.displayName)} · Todos os direitos reservados.</footer>
+    ${cfg.showFooter !== false ? `<footer style="margin-top: 40px; font-size: 11px; color: ${escapeHtml(cfg.footerColor || '#52525b')};">${escapeHtml(getFooterText(cfg))}</footer>` : ''}
   </main>
 
   <script>
