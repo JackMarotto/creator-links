@@ -664,11 +664,11 @@
         { id: "s_tiktok", name: "TikTok", icon: "fa-brands fa-tiktok", url: "https://tiktok.com/@omarotto", active: false }
       ],
       links: [
-        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover" },
-        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover" },
-        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover" },
-        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover" },
-        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover" }
+        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
+        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
+        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
+        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
+        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" }
       ]
     };
 
@@ -1665,7 +1665,7 @@
     }
 
     function adicionarNovoLink() {
-      appConfig.links.push({ id: "link_" + Date.now(), title: "Novo Item Customizado", subtitle: "Breve descrição do destino", url: "https://", icon: "fa-solid fa-link", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover" });
+      appConfig.links.push({ id: "link_" + Date.now(), title: "Novo Item Customizado", subtitle: "Breve descrição do destino", url: "https://", icon: "fa-solid fa-link", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" });
       salvarConfiguracao();
       renderizarListaLinksAdmin();
       dispararAtualizacaoGeral();
@@ -2201,6 +2201,123 @@
     function escapeHtml(string) {
       if (!string) return '';
       return String(string).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // ============================================================================
+    // Markdown (subset suportado pela Twitch em painéis/bios)
+    // Suporta: headings # ## ###, blockquote >, negrito **x**, itálico *x*,
+    // riscado ~~x~~, link [texto](url), listas ordenadas (1.) e não ordenadas
+    // (- ou *), listas aninhadas, dois espaços no fim da linha = <br>, e
+    // parágrafos. NÃO suporta (como a Twitch): tabelas, código e imagens.
+    //
+    // Segurança: o texto bruto é escapado ANTES de qualquer tag ser emitida,
+    // então nenhum HTML do autor chega ao innerHTML. O único HTML vindo do
+    // autor é a URL de um link, que é filtrada em sanitizarUrlMarkdown().
+    // ============================================================================
+
+    function sanitizarUrlMarkdown(url) {
+      const u = String(url || '').trim();
+      // Só esquemas seguros; o resto é rejeitado (evita javascript:, data:, vbscript:)
+      if (/^(https?:\/\/|mailto:|\/|#)/i.test(u)) return u;
+      if (/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(u)) return 'https://' + u;
+      return '#';
+    }
+
+    // Aplica as marcações inline sobre um texto JÁ escapado.
+    function markdownInline(escaped) {
+      return escaped
+        // links [texto](url) — primeiro, para o texto do link não ser reprocessado
+        .replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (_, txt, url) =>
+          `<a href="${escapeHtml(sanitizarUrlMarkdown(url))}" target="_blank" rel="noopener noreferrer">${txt}</a>`)
+        // **negrito** antes de *itálico*, senão **x** vira itálico+vazio
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+        .replace(/~~([^~]+)~~/g, '<s>$1</s>');
+    }
+
+    function markdownParaHtml(md, opts) {
+      const o = opts || {};
+      const corBarra = o.corBarra || 'transparent';
+      const fonte = o.fontSize || '14px';
+
+      if (!md || !String(md).trim()) return '';
+
+      const linhas = String(md).replace(/\r\n?/g, '\n').split('\n');
+      let html = '';
+      const pilhaLista = [];   // [{tipo, nivel, liAberto}] — listas abertas, externa → interna
+
+      // Encerra o <li> pendente do topo da pilha.
+      const encerrarLi = () => {
+        const t = pilhaLista[pilhaLista.length - 1];
+        if (t && t.liAberto) { html += '</li>'; t.liAberto = false; }
+      };
+
+      // Fecha as listas de nível >= nivel.
+      const fecharListasAte = (nivel) => {
+        while (pilhaLista.length && pilhaLista[pilhaLista.length - 1].nivel >= nivel) {
+          encerrarLi();
+          html += `</${pilhaLista.pop().tipo}>`;
+        }
+      };
+
+      for (const bruta of linhas) {
+        // Dois espaços no fim = quebra de linha (como a Twitch)
+        const forcarQuebra = /  $/.test(bruta);
+        const linha = bruta.replace(/ {2,}$/, '');
+        const texto = markdownInline(escapeHtml(linha));
+        const recuo = (linha.match(/^(\s*)/)[1] || '').replace(/\t/g, '  ').length;
+
+        // --- Lista (ordenada ou não), aninhada conforme o recuo ---
+        const mLista = linha.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
+        if (mLista) {
+          const tipo = /\d/.test(mLista[2]) ? 'ol' : 'ul';
+          const nivel = Math.floor(recuo / 2);
+          const topo = pilhaLista[pilhaLista.length - 1];
+
+          if (topo && topo.nivel === nivel && topo.tipo === tipo) {
+            // Mesmo nível e tipo: encerra o <li> anterior e abre o próximo.
+            encerrarLi();
+          } else if (topo && topo.nivel < nivel) {
+            // Abre lista aninhada DENTRO do <li> ainda aberto (sem fechá-lo).
+            html += `<${tipo}>`;
+            pilhaLista.push({ tipo, nivel, liAberto: false });
+          } else {
+            fecharListasAte(nivel);
+            html += `<${tipo}>`;
+            pilhaLista.push({ tipo, nivel, liAberto: false });
+          }
+          html += `<li>${markdownInline(escapeHtml(mLista[3]))}`;
+          pilhaLista[pilhaLista.length - 1].liAberto = true;
+          continue;
+        }
+
+        fecharListasAte(0);
+
+        // --- Linha vazia: só preserva uma quebra se a anterior pediu <br> ---
+        if (!linha.trim()) continue;
+
+        // --- Heading ---
+        const mH = linha.match(/^(#{1,3})\s+(.*)$/);
+        if (mH) {
+          const n = mH[1].length;
+          const tam = { 1: '17px', 2: '15px', 3: '14px' }[n];
+          const peso = { 1: 800, 2: 700, 3: 700 }[n];
+          html += `<h3 style="margin:14px 0 8px 0;padding-left:10px;border-left:3px solid ${escapeHtml(corBarra)};font-size:${tam};font-weight:${peso};line-height:1.3;color:#fff;">${markdownInline(escapeHtml(mH[2]))}</h3>`;
+          continue;
+        }
+
+        // --- Blockquote (testado no texto cru, antes do escape) ---
+        const mQ = linha.match(/^>\s*(.*)$/);
+        if (mQ) {
+          html += `<blockquote style="margin:8px 0;padding:2px 0 2px 12px;border-left:3px solid ${escapeHtml(corBarra)};opacity:.85;">${markdownInline(escapeHtml(mQ[1]))}</blockquote>`;
+          continue;
+        }
+
+        html += `<p style="margin:0 0 6px 0;line-height:1.55;">${texto}${forcarQuebra ? '<br>' : ''}</p>`;
+      }
+
+      fecharListasAte(0);
+      return html;
     }
   </script>
 </body>

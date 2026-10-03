@@ -1,0 +1,97 @@
+- generic [active] [ref=f10e1]:
+  - banner [ref=f10e2]:
+    - generic [ref=f10e3]:
+      - generic [ref=f10e4]:
+        - generic [ref=f10e5]: 
+        - generic [ref=f10e7]:
+          - heading "oMarotto Hub Pages" [level=1] [ref=f10e8]:
+            - text: oMarotto
+            - generic [ref=f10e9]: Hub Pages
+          - paragraph [ref=f10e10]: Bio Linktree com Twitch Live Sync & Painel Lateral
+      - generic [ref=f10e11]:
+        - button " Página Pública (Bio)" [ref=f10e12] [cursor=pointer]:
+          - generic [ref=f10e13]: 
+          - generic [ref=f10e14]: Página Pública (Bio)
+        - button " Painel de Config" [ref=f10e15] [cursor=pointer]:
+          - generic [ref=f10e16]: 
+          - generic [ref=f10e17]: Painel de Config
+      - generic [ref=f10e18]:
+        - button " Compartilhar" [ref=f10e19] [cursor=pointer]:
+          - generic [ref=f10e20]: 
+          - generic [ref=f10e21]: Compartilhar
+        - button " Gerar index.html" [ref=f10e22] [cursor=pointer]:
+          - generic [ref=f10e23]: 
+          - generic [ref=f10e24]: Gerar index.html
+  - generic:
+    - generic: 
+    - generic: Alteração salva!
+  - main [ref=f10e25]:
+    - generic [ref=f10e27]:
+      - generic [ref=f10e28] [cursor=pointer]:
+        - img "Avatar" [ref=f10e30]
+        - generic [ref=f10e31]: 
+      - generic [ref=f10e33]:
+        - heading "oMarotto" [level=2] [ref=f10e34]
+        - paragraph [ref=f10e35]: "@omarotto"
+        - paragraph [ref=f10e36]: Criador de conteúdo, Gamer & Desenvolvedor de Widgets.Acompanhe minhas lives e confira os projetos nos links abaixo!
+      - generic [ref=f10e37]:
+        - link "" [ref=f10e38] [cursor=pointer]:
+          - /url: https://twitch.tv/omarotto
+        - link "" [ref=f10e40] [cursor=pointer]:
+          - /url: https://youtube.com/@omarotto
+        - link "" [ref=f10e42] [cursor=pointer]:
+          - /url: https://discord.gg
+        - link "" [ref=f10e44] [cursor=pointer]:
+          - /url: https://x.com/omarotto
+        - link "" [ref=f10e46] [cursor=pointer]:
+          - /url: https://instagram.com/omarotto
+      - generic [ref=f10e48]:
+        - link " Canal de Lives na Twitch Transmissões quase todos os dias às 19h " [ref=f10e49] [cursor=pointer]:
+          - /url: https://twitch.tv/omarotto
+          - generic [ref=f10e50]:
+            - generic [ref=f10e51]: 
+            - generic [ref=f10e53]:
+              - generic [ref=f10e54]: Canal de Lives na Twitch
+              - paragraph [ref=f10e56]: Transmissões quase todos os dias às 19h
+          - generic [ref=f10e57]: 
+        - link " Comunidade no Discord VIP Participe de sorteios, bate-papo e novidades " [ref=f10e59] [cursor=pointer]:
+          - /url: https://discord.gg
+          - generic [ref=f10e60]:
+            - generic [ref=f10e61]: 
+            - generic [ref=f10e63]:
+              - generic [ref=f10e64]:
+                - generic [ref=f10e65]: Comunidade no Discord
+                - generic [ref=f10e66]: VIP
+              - paragraph [ref=f10e67]: Participe de sorteios, bate-papo e novidades
+          - generic [ref=f10e68]: 
+        - link " Widgets Gratuitos para OBS Novo Widgets de jogo atual, metas e avisos de live " [ref=f10e70] [cursor=pointer]:
+          - /url: https://github.com/jackmarotto/Streamer-Bio-and-pannels
+          - generic [ref=f10e71]:
+            - generic [ref=f10e72]: 
+            - generic [ref=f10e74]:
+              - generic [ref=f10e75]:
+                - generic [ref=f10e76]: Widgets Gratuitos para OBS
+                - generic [ref=f10e77]: Novo
+              - paragraph [ref=f10e78]: Widgets de jogo atual, metas e avisos de live
+          - generic [ref=f10e79]: 
+        - link " Setup Gamer & Equipamentos Periféricos, microfone e peças do PC recomendadas " [ref=f10e81] [cursor=pointer]:
+          - /url: https://amazon.com.br
+          - generic [ref=f10e82]:
+            - generic [ref=f10e83]: 
+            - generic [ref=f10e85]:
+              - generic [ref=f10e86]: Setup Gamer & Equipamentos
+              - paragraph [ref=f10e88]: Periféricos, microfone e peças do PC recomendadas
+          - generic [ref=f10e89]: 
+        - link " Mande uma mensagem / Pix Apoio Apoie a produção de conteúdo do canal " [ref=f10e91] [cursor=pointer]:
+          - /url: https://tipa.ai
+          - generic [ref=f10e92]:
+            - generic [ref=f10e93]: 
+            - generic [ref=f10e95]:
+              - generic [ref=f10e96]:
+                - generic [ref=f10e97]: Mande uma mensagem / Pix
+                - generic [ref=f10e98]: Apoio
+              - paragraph [ref=f10e99]: Apoie a produção de conteúdo do canal
+          - generic [ref=f10e100]: 
+      - generic [ref=f10e102]: © 2026 oMarotto · Todos os direitos reservados.
+    - text:                                +                                +                                
+  - text:                         
