@@ -1,0 +1,123 @@
+- generic [active] [ref=f13e1]:
+  - banner [ref=f13e2]:
+    - generic [ref=f13e3]:
+      - generic [ref=f13e4]:
+        - generic [ref=f13e5]: 
+        - generic [ref=f13e7]:
+          - heading "oMarotto Hub Pages" [level=1] [ref=f13e8]:
+            - text: oMarotto
+            - generic [ref=f13e9]: Hub Pages
+          - paragraph [ref=f13e10]: Bio Linktree com Twitch Live Sync & Painel Lateral
+      - generic [ref=f13e11]:
+        - button " Página Pública (Bio)" [ref=f13e12] [cursor=pointer]:
+          - generic [ref=f13e13]: 
+          - generic [ref=f13e14]: Página Pública (Bio)
+        - button " Painel de Config" [ref=f13e15] [cursor=pointer]:
+          - generic [ref=f13e16]: 
+          - generic [ref=f13e17]: Painel de Config
+      - generic [ref=f13e18]:
+        - button " Compartilhar" [ref=f13e19] [cursor=pointer]:
+          - generic [ref=f13e20]: 
+          - generic [ref=f13e21]: Compartilhar
+        - button " Gerar index.html" [ref=f13e22] [cursor=pointer]:
+          - generic [ref=f13e23]: 
+          - generic [ref=f13e24]: Gerar index.html
+  - generic:
+    - generic: 
+    - generic: Alteração salva!
+  - main [ref=f13e25]:
+    - generic [ref=f13e27]:
+      - generic [ref=f13e28] [cursor=pointer]:
+        - img "Avatar" [ref=f13e30]
+        - generic [ref=f13e31]: 
+      - generic [ref=f13e33]:
+        - heading "oMarotto" [level=2] [ref=f13e34]
+        - paragraph [ref=f13e35]: "@omarotto"
+        - paragraph [ref=f13e36]: Criador de conteúdo, Gamer & Desenvolvedor de Widgets.Acompanhe minhas lives e confira os projetos nos links abaixo!
+      - generic [ref=f13e37]:
+        - link "" [ref=f13e38] [cursor=pointer]:
+          - /url: https://twitch.tv/omarotto
+        - link "" [ref=f13e40] [cursor=pointer]:
+          - /url: https://youtube.com/@omarotto
+        - link "" [ref=f13e42] [cursor=pointer]:
+          - /url: https://discord.gg
+        - link "" [ref=f13e44] [cursor=pointer]:
+          - /url: https://x.com/omarotto
+        - link "" [ref=f13e46] [cursor=pointer]:
+          - /url: https://instagram.com/omarotto
+      - generic [ref=f13e48]:
+        - link " Canal de Lives na Twitch Transmissões quase todos os dias às 19h " [ref=f13e49] [cursor=pointer]:
+          - /url: https://twitch.tv/omarotto
+          - generic [ref=f13e50]:
+            - generic [ref=f13e51]: 
+            - generic [ref=f13e53]:
+              - generic [ref=f13e54]: Canal de Lives na Twitch
+              - paragraph [ref=f13e56]: Transmissões quase todos os dias às 19h
+          - generic [ref=f13e57]: 
+        - link " Comunidade no Discord VIP Participe de sorteios, bate-papo e novidades " [ref=f13e59] [cursor=pointer]:
+          - /url: https://discord.gg
+          - generic [ref=f13e60]:
+            - generic [ref=f13e61]: 
+            - generic [ref=f13e63]:
+              - generic [ref=f13e64]:
+                - generic [ref=f13e65]: Comunidade no Discord
+                - generic [ref=f13e66]: VIP
+              - paragraph [ref=f13e67]: Participe de sorteios, bate-papo e novidades
+          - generic [ref=f13e68]: 
+        - link " Widgets Gratuitos para OBS Novo Widgets de jogo atual, metas e avisos de live " [ref=f13e70] [cursor=pointer]:
+          - /url: https://github.com/jackmarotto/Streamer-Bio-and-pannels
+          - generic [ref=f13e71]:
+            - generic [ref=f13e72]: 
+            - generic [ref=f13e74]:
+              - generic [ref=f13e75]:
+                - generic [ref=f13e76]: Widgets Gratuitos para OBS
+                - generic [ref=f13e77]: Novo
+              - paragraph [ref=f13e78]: Widgets de jogo atual, metas e avisos de live
+          - generic [ref=f13e79]: 
+        - link " Setup Gamer & Equipamentos Periféricos, microfone e peças do PC recomendadas " [ref=f13e81] [cursor=pointer]:
+          - /url: https://amazon.com.br
+          - generic [ref=f13e82]:
+            - generic [ref=f13e83]: 
+            - generic [ref=f13e85]:
+              - generic [ref=f13e86]: Setup Gamer & Equipamentos
+              - paragraph [ref=f13e88]: Periféricos, microfone e peças do PC recomendadas
+          - generic [ref=f13e89]: 
+        - link " Mande uma mensagem / Pix Apoio Apoie a produção de conteúdo do canal " [ref=f13e91] [cursor=pointer]:
+          - /url: https://tipa.ai
+          - generic [ref=f13e92]:
+            - generic [ref=f13e93]: 
+            - generic [ref=f13e95]:
+              - generic [ref=f13e96]:
+                - generic [ref=f13e97]: Mande uma mensagem / Pix
+                - generic [ref=f13e98]: Apoio
+              - paragraph [ref=f13e99]: Apoie a produção de conteúdo do canal
+          - generic [ref=f13e100]: 
+        - generic [ref=f13e102]:
+          - paragraph [ref=f13e103]: "Esse é o meu Setup:"
+          - blockquote [ref=f13e104]:
+            - strong [ref=f13e105]: PC
+          - list [ref=f13e106]:
+            - listitem [ref=f13e107]:
+              - strong [ref=f13e108]: "Placa Mãe:"
+              - link "Gigabyte B760M Gaming AC" [ref=f13e109] [cursor=pointer]:
+                - /url: https://meli.la/1rQnFeB
+            - listitem [ref=f13e110]:
+              - strong [ref=f13e111]: "Processador:"
+              - link "Intel Core i5 14400F" [ref=f13e112] [cursor=pointer]:
+                - /url: https://meli.la/1yrRezX
+            - listitem [ref=f13e113]:
+              - strong [ref=f13e114]: "Memória:"
+              - link "DDR4 3200 16GB" [ref=f13e115] [cursor=pointer]:
+                - /url: https://meli.la/3BcVcTV
+          - blockquote [ref=f13e116]:
+            - strong [ref=f13e117]: Consoles
+          - list [ref=f13e118]:
+            - listitem [ref=f13e119]:
+              - link "Nintendo Switch" [ref=f13e120] [cursor=pointer]:
+                - /url: https://meli.la/2Mm8RhW
+            - listitem [ref=f13e121]:
+              - link "PlayStation 5" [ref=f13e122] [cursor=pointer]:
+                - /url: https://meli.la/2PHHSFy
+      - generic [ref=f13e123]: © 2026 oMarotto · Todos os direitos reservados.
+    - text:                                +                                +                                      
+  - text:                         

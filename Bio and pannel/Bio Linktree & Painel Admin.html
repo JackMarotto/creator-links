@@ -550,6 +550,9 @@
               <button onclick="adicionarNovoLink()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md shadow-emerald-700/30">
                 <i class="fa-solid fa-plus"></i> Novo Item
               </button>
+              <button onclick="adicionarNovoItemTexto()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition flex items-center gap-1.5 border border-zinc-700">
+                <i class="fa-solid fa-align-left"></i> Novo Texto
+              </button>
             </div>
             <div id="adminLinksList" class="space-y-3.5"></div>
           </div>
@@ -1373,6 +1376,14 @@
       return base;
     }
 
+    // Classes do bloco de texto (item type "texto"). Sem cartão, sem borda, sem blur:
+// texto solto sobre o fundo, com a cor de destaque nas barras laterais dos títulos.
+    function getClasseBlocoTexto(textSize, textAlign) {
+      const tam = { sm: 'text-[11px]', md: 'text-[13px]', lg: 'text-[15px]' }[textSize] || 'text-[13px]';
+      const alin = textAlign === 'center' ? 'text-center' : 'text-left';
+      return `w-full ${tam} ${alin} text-zinc-300 leading-relaxed break-words`;
+    }
+
     function renderizarLinksDOM() {
       const g = (id) => document.getElementById(id);
       const pubContainer = g('pubLinksContainer');
@@ -1425,6 +1436,12 @@
         }
 
         if (pubContainer) {
+          if (item.type === 'texto') {
+            const divTxt = document.createElement('div');
+            divTxt.className = getClasseBlocoTexto(item.textSize, item.textAlign);
+            divTxt.innerHTML = markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' });
+            pubContainer.appendChild(divTxt);
+          } else {
           const a = document.createElement('a');
           a.href = item.url;
           a.target = "_blank";
@@ -1465,6 +1482,17 @@
             </div>`}
           `;
           pubContainer.appendChild(a);
+          }
+        }
+
+        if (item.type === 'texto') {
+          if (prevContainer) {
+            const divPrev = document.createElement('div');
+            divPrev.className = getClasseBlocoTexto(item.textSize, item.textAlign);
+            divPrev.innerHTML = markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' });
+            prevContainer.appendChild(divPrev);
+          }
+          return;
         }
 
         if (prevContainer) {
@@ -1640,6 +1668,10 @@
             <div class="flex items-center gap-1.5 self-end sm:self-auto">
               <button onclick="moverLink(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30 p-1.5 text-zinc-500"' : 'class="p-1.5 text-zinc-400 hover:text-white rounded hover:bg-zinc-800 transition"'}><i class="fa-solid fa-arrow-up text-xs"></i></button>
               <button onclick="moverLink(${index}, 1)" ${index === appConfig.links.length - 1 ? 'disabled class="opacity-30 p-1.5 text-zinc-500"' : 'class="p-1.5 text-zinc-400 hover:text-white rounded hover:bg-zinc-800 transition"'}><i class="fa-solid fa-arrow-down text-xs"></i></button>
+              <select onchange="alternarTipoLink(${index}, this.value)" title="Tipo de item: botão com link ou bloco de texto" class="ml-1 px-1.5 py-1 text-[11px] rounded bg-zinc-800 text-zinc-300 border border-zinc-700 hover:border-purple-500 transition">
+                <option value="link" ${(!item.type || item.type === 'link') ? 'selected' : ''}>Botão</option>
+                <option value="texto" ${item.type === 'texto' ? 'selected' : ''}>Texto</option>
+              </select>
               <button onclick="alternarDestaqueLink(${index})" class="px-2 py-1 text-[11px] rounded font-medium ${item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'} transition ml-1"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Glow</button>
               <label title="Cor personalizada do Glow deste item" class="ml-1 flex items-center gap-1 px-1.5 py-1 rounded ${item.highlight ? 'bg-zinc-800' : 'bg-zinc-800/60 opacity-60'} transition cursor-pointer">
                 <input type="color" value="${escapeHtml(getItemGlowColor(item))}" oninput="atualizarLinkCampo(${index}, 'glowColor', this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0 p-0">
@@ -1648,11 +1680,30 @@
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            ${(item.type === 'texto') ? `
+            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Conteúdo (Markdown)</label>
+              <textarea rows="10" oninput="atualizarLinkCampo(${index}, 'content', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-purple-500" style="resize:vertical;line-height:1.5;" spellcheck="false" placeholder="Esse é o meu Setup:&#10;&#10;>**PC**&#10;* **Placa Mãe:** [Gigabyte B760M](https://exemplo.com)">${escapeHtml(item.content || '')}</textarea>
+              <p class="text-[10px] text-zinc-500 mt-1 leading-relaxed"><strong>PC</strong> negrito · <em>*itálico*</em> · <s>~~riscado~~</s> · [link](url) · <code>&gt;PC</code> título com barra · <code>#</code>/<code>##</code> headings · <code>-</code> ou <code>*</code> lista · <code>1.</code> lista numerada · 2 espaços no fim = quebra de linha</p>
+            </div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Cor da Barra</label><div class="flex items-center gap-2">
+              <input type="color" value="${escapeHtml(item.textColor || appConfig.primaryColor || '#9146FF')}" oninput="atualizarLinkCampo(${index}, 'textColor', this.value)" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0">
+              <button onclick="atualizarLinkCampo(${index}, 'textColor', '')" class="px-2 py-1.5 text-[11px] bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-300 hover:border-purple-500 transition shrink-0">Usar cor principal</button>
+            </div></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho do Texto</label><select onchange="atualizarLinkCampo(${index}, 'textSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
+              <option value="sm" ${item.textSize === 'sm' ? 'selected' : ''}>Pequeno</option>
+              <option value="md" ${(!item.textSize || item.textSize === 'md') ? 'selected' : ''}>Médio</option>
+              <option value="lg" ${item.textSize === 'lg' ? 'selected' : ''}>Grande</option>
+            </select></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Alinhamento</label><select onchange="atualizarLinkCampo(${index}, 'textAlign', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
+              <option value="left" ${(!item.textAlign || item.textAlign === 'left') ? 'selected' : ''}>À esquerda</option>
+              <option value="center" ${item.textAlign === 'center' ? 'selected' : ''}>Centralizado</option>
+            </select></div>
+            ` : `
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título do Botão</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino</label><input type="text" value="${escapeHtml(item.url)}" oninput="atualizarLinkCampo(${index}, 'url', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Subtítulo (Opcional)</label><input type="text" value="${escapeHtml(item.subtitle || '')}" oninput="atualizarLinkCampo(${index}, 'subtitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Badge (Ex: NOVO)</label><input type="text" value="${escapeHtml(item.badge || '')}" oninput="atualizarLinkCampo(${index}, 'badge', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-          </div>
+          </div>`}
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
             <div class="sm:col-span-3"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem (opcional)</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="left" ${(item.imagePosition || 'left') === 'left' ? 'selected' : ''}>Miniatura à Esquerda</option><option value="top" ${item.imagePosition === 'top' ? 'selected' : ''}>Banner Acima</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Banner Abaixo</option></select></div>
@@ -1677,6 +1728,47 @@
         salvarConfiguracao();
         dispararAtualizacaoGeral();
       }
+    }
+
+    function adicionarNovoItemTexto() {
+      const exemplo = `Esse é o meu Setup:
+
+>**PC**
+* **Placa Mãe:** [Gigabyte B760M Gaming AC](https://meli.la/1rQnFeB)
+* **Processador:** [Intel Core i5 14400F](https://meli.la/1yrRezX)
+* **Memória:** [DDR4 3200 16GB](https://meli.la/3BcVcTV)
+
+>**Consoles**
+* [Nintendo Switch](https://meli.la/2Mm8RhW)
+* [PlayStation 5](https://meli.la/2PHHSFy)`;
+      appConfig.links.push({ id: "txt_" + Date.now(), type: "texto", title: "Meu Setup", subtitle: "", url: "", icon: "", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", content: exemplo, textColor: "", textSize: "md", textAlign: "left" });
+      salvarConfiguracao();
+      dispararAtualizacaoGeral();
+      mostrarToast('Item de texto adicionado!');
+    }
+
+    // Alterna entre 'link' e 'texto'. Ao virar texto, garante os campos de texto;
+    // ao voltar para link, garante os campos de link — assim nada se perde ao ida e volta.
+    function alternarTipoLink(index, novoTipo) {
+      const item = appConfig.links[index];
+      if (!item || item.type === novoTipo) return;
+      item.type = novoTipo;
+      if (novoTipo === 'texto') {
+        item.textSize = item.textSize || 'md';
+        item.textAlign = item.textAlign || 'left';
+        item.textColor = item.textColor || '';
+        if (typeof item.content !== 'string' || !item.content) {
+          item.content = `>**${item.title || 'Seção'}**\n* [Item](https://)`;
+        }
+      } else {
+        item.imagePosition = item.imagePosition || 'left';
+        item.imageSize = item.imageSize || 'md';
+        item.imageFit = item.imageFit || 'cover';
+        if (!item.url) item.url = 'https://';
+        if (!item.icon) item.icon = 'fa-solid fa-link';
+      }
+      salvarConfiguracao();
+      dispararAtualizacaoGeral();
     }
 
     function alternarDestaqueLink(index) {
@@ -1746,6 +1838,11 @@
         if (!['left', 'top', 'bottom'].includes(item.imagePosition)) item.imagePosition = 'left';
         if (!['sm', 'md', 'lg', 'banner'].includes(item.imageSize)) item.imageSize = 'md';
         if (!['cover', 'contain'].includes(item.imageFit)) item.imageFit = 'cover';
+        if (!['link', 'texto'].includes(item.type)) item.type = 'link';
+        if (typeof item.content !== 'string') item.content = "";
+        if (typeof item.textColor !== 'string' || (item.textColor && !/^#[0-9a-f]{6}$/i.test(item.textColor))) item.textColor = "";
+        if (!['sm', 'md', 'lg'].includes(item.textSize)) item.textSize = 'md';
+        if (!['left', 'center'].includes(item.textAlign)) item.textAlign = 'left';
       });
       return c;
     }
@@ -2041,6 +2138,15 @@
 
       let linksHtml = '';
       (cfg.links || []).filter(l => l.active).forEach(l => {
+        // Item de texto: emite o markdown já renderizado (o arquivo exportado é
+        // estático e não carrega o painel, então o parser roda aqui na exportação).
+        if (l.type === 'texto') {
+          const corBarra = (l.textColor && l.textColor.trim()) || cfg.primaryColor || '#9146FF';
+          const tam = { sm: '11px', md: '13px', lg: '15px' }[l.textSize] || '13px';
+          const alin = l.textAlign === 'center' ? 'center' : 'left';
+          linksHtml += `<div style="width:100%;text-align:${alin};font-size:${tam};color:#a1a1aa;line-height:1.65;word-break:break-word;">${markdownParaHtml(l.content, { corBarra })}</div>\n`;
+          return;
+        }
         const isTwitch = (l.url && l.url.toLowerCase().includes('twitch.tv/')) || (l.icon && l.icon.includes('twitch'));
         const isHl = l.highlight;
         const glowCor = (l.glowColor && l.glowColor.trim()) || cfg.primaryColor || '#9146FF';
@@ -2227,7 +2333,7 @@
     function markdownInline(escaped) {
       return escaped
         // links [texto](url) — primeiro, para o texto do link não ser reprocessado
-        .replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (_, txt, url) =>
+        .replace(/\[([^\]]*)\]\(([^()\s]+)\)/g, (_, txt, url) =>
           `<a href="${escapeHtml(sanitizarUrlMarkdown(url))}" target="_blank" rel="noopener noreferrer">${txt}</a>`)
         // **negrito** antes de *itálico*, senão **x** vira itálico+vazio
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')

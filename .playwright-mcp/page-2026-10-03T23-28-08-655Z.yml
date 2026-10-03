@@ -1,0 +1,143 @@
+- generic [active] [ref=f20e1]:
+  - text: "\"\\n\\n\\n \\n \\n \\n ðŸŽ®\\\">\\n \\n \\n \\n\\n\\n \\n"
+  - main [ref=f20e2]:
+    - text: \n
+    - generic [ref=f20e3]:
+      - text: \n
+      - link "\\n \\n ðŸ”´ AO VIVO NA TWITCH\\n" [ref=f20e4] [cursor=pointer]:
+        - /url: \"https://twitch.tv/omarotto\"
+      - text: \n
+    - text: \n\n
+    - img "\\\"Avatar\\\"" [ref=f20e5]
+    - text: \n
+    - heading "oMarotto" [level=1] [ref=f20e6]
+    - text: \n
+    - paragraph [ref=f20e7]: "@omarotto"
+    - text: \n
+    - paragraph [ref=f20e8]: Criador de conteÃºdo, Gamer & Desenvolvedor de Widgets.\nAcompanhe minhas lives e confira os projetos nos links abaixo!
+    - text: \n\n
+    - generic [ref=f20e9]:
+      - text: \n
+      - link "\\n \\n" [ref=f20e10] [cursor=pointer]:
+        - /url: \"https://twitch.tv/omarotto\"
+      - text: \n
+      - link "\\n \\n" [ref=f20e11] [cursor=pointer]:
+        - /url: \"https://youtube.com/@omarotto\"
+      - text: \n
+      - link "\\n \\n" [ref=f20e12] [cursor=pointer]:
+        - /url: \"https://discord.gg\"
+      - text: \n
+      - link "\\n \\n" [ref=f20e13] [cursor=pointer]:
+        - /url: \"https://x.com/omarotto\"
+      - text: \n
+      - link "\\n \\n" [ref=f20e14] [cursor=pointer]:
+        - /url: \"https://instagram.com/omarotto\"
+    - text: \n
+    - generic [ref=f20e15]:
+      - text: \n
+      - link "\\n \\n \\n \\n Canal de Lives na Twitch \\n TransmissÃµes quase todos os dias Ã s 19h \\n \\n \\n \\n" [ref=f20e16] [cursor=pointer]:
+        - /url: \"https://twitch.tv/omarotto\"
+        - text: \n
+        - generic [ref=f20e17]:
+          - text: \n \n
+          - generic [ref=f20e18]:
+            - text: \n
+            - generic [ref=f20e19]: Canal de Lives na Twitch
+            - text: \n
+            - generic [ref=f20e20]: TransmissÃµes quase todos os dias Ã s 19h
+            - text: \n
+          - text: \n
+        - text: \n \n
+      - text: \n
+      - link "\\n \\n \\n \\n Comunidade no Discord VIP \\n Participe de sorteios, bate-papo e novidades \\n \\n \\n \\n" [ref=f20e21] [cursor=pointer]:
+        - /url: \"https://discord.gg\"
+        - text: \n
+        - generic [ref=f20e22]:
+          - text: \n \n
+          - generic [ref=f20e23]:
+            - text: \n
+            - generic [ref=f20e24]:
+              - text: Comunidade no Discord
+              - generic [ref=f20e25]: VIP
+            - text: \n
+            - generic [ref=f20e26]: Participe de sorteios, bate-papo e novidades
+            - text: \n
+          - text: \n
+        - text: \n \n
+      - text: \n
+      - link "\\n \\n \\n \\n Widgets Gratuitos para OBS Novo \\n Widgets de jogo atual, metas e avisos de live \\n \\n \\n \\n" [ref=f20e27] [cursor=pointer]:
+        - /url: \"https://github.com/jackmarotto/Streamer-Bio-and-pannels\"
+        - text: \n
+        - generic [ref=f20e28]:
+          - text: \n \n
+          - generic [ref=f20e29]:
+            - text: \n
+            - generic [ref=f20e30]:
+              - text: Widgets Gratuitos para OBS
+              - generic [ref=f20e31]: Novo
+            - text: \n
+            - generic [ref=f20e32]: Widgets de jogo atual, metas e avisos de live
+            - text: \n
+          - text: \n
+        - text: \n \n
+      - text: \n
+      - link "\\n \\n \\n \\n Setup Gamer & Equipamentos \\n PerifÃ©ricos, microfone e peÃ§as do PC recomendadas \\n \\n \\n \\n" [ref=f20e33] [cursor=pointer]:
+        - /url: \"https://amazon.com.br\"
+        - text: \n
+        - generic [ref=f20e34]:
+          - text: \n \n
+          - generic [ref=f20e35]:
+            - text: \n
+            - generic [ref=f20e36]: Setup Gamer & Equipamentos
+            - text: \n
+            - generic [ref=f20e37]: PerifÃ©ricos, microfone e peÃ§as do PC recomendadas
+            - text: \n
+          - text: \n
+        - text: \n \n
+      - text: \n
+      - link "\\n \\n \\n \\n Mande uma mensagem / Pix Apoio \\n Apoie a produÃ§Ã£o de conteÃºdo do canal \\n \\n \\n \\n" [ref=f20e38] [cursor=pointer]:
+        - /url: \"https://tipa.ai\"
+        - text: \n
+        - generic [ref=f20e39]:
+          - text: \n \n
+          - generic [ref=f20e40]:
+            - text: \n
+            - generic [ref=f20e41]:
+              - text: Mande uma mensagem / Pix
+              - generic [ref=f20e42]: Apoio
+            - text: \n
+            - generic [ref=f20e43]: Apoie a produÃ§Ã£o de conteÃºdo do canal
+            - text: \n
+          - text: \n
+        - text: \n \n
+      - generic [ref=f20e44]:
+        - paragraph [ref=f20e45]: "Esse Ã© o meu Setup:"
+        - blockquote [ref=f20e46]:
+          - strong [ref=f20e47]: PC
+        - list [ref=f20e48]:
+          - listitem [ref=f20e49]:
+            - strong [ref=f20e50]: "Placa MÃ£e:"
+            - link "Gigabyte B760M Gaming AC" [ref=f20e51] [cursor=pointer]:
+              - /url: \"https://meli.la/1rQnFeB\"
+          - listitem [ref=f20e52]:
+            - strong [ref=f20e53]: "Processador:"
+            - link "Intel Core i5 14400F" [ref=f20e54] [cursor=pointer]:
+              - /url: \"https://meli.la/1yrRezX\"
+          - listitem [ref=f20e55]:
+            - strong [ref=f20e56]: "MemÃ³ria:"
+            - link "DDR4 3200 16GB" [ref=f20e57] [cursor=pointer]:
+              - /url: \"https://meli.la/3BcVcTV\"
+        - blockquote [ref=f20e58]:
+          - strong [ref=f20e59]: Consoles
+        - list [ref=f20e60]:
+          - listitem [ref=f20e61]:
+            - link "Nintendo Switch" [ref=f20e62] [cursor=pointer]:
+              - /url: \"https://meli.la/2Mm8RhW\"
+          - listitem [ref=f20e63]:
+            - link "PlayStation 5" [ref=f20e64] [cursor=pointer]:
+              - /url: \"https://meli.la/2PHHSFy\"
+      - text: \n
+    - text: \n
+    - generic [ref=f20e65]: Â© 2026 oMarotto Â· Todos os direitos reservados.
+    - text: \n
+  - text: \n\n \n\n"
