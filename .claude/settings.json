@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/clean-scratch.sh >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
