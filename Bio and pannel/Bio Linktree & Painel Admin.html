@@ -2341,6 +2341,13 @@
         .replace(/~~([^~]+)~~/g, '<s>$1</s>');
     }
 
+    // Recuo das listas. O export e o preflight do Tailwind aplicam
+    // `* { padding: 0 }`, que apaga o recuo padrão do navegador — sem este
+    // estilo inline os bullets ficam colados na borda do card. Como o resto
+    // do renderer usa estilo inline, ele sobrevive ao export.
+    const estiloLista = (nivel) =>
+      ` style="padding-left:${18 + nivel * 16}px;margin:4px 0;"`;
+
     function markdownParaHtml(md, opts) {
       const o = opts || {};
       const corBarra = o.corBarra || 'transparent';
@@ -2385,11 +2392,11 @@
             encerrarLi();
           } else if (topo && topo.nivel < nivel) {
             // Abre lista aninhada DENTRO do <li> ainda aberto (sem fechá-lo).
-            html += `<${tipo}>`;
+            html += `<${tipo}${estiloLista(nivel)}>`;
             pilhaLista.push({ tipo, nivel, liAberto: false });
           } else {
             fecharListasAte(nivel);
-            html += `<${tipo}>`;
+            html += `<${tipo}${estiloLista(nivel)}>`;
             pilhaLista.push({ tipo, nivel, liAberto: false });
           }
           html += `<li>${markdownInline(escapeHtml(mLista[3]))}`;

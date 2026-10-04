@@ -1,0 +1,9 @@
+# Artefatos de teste do Playwright MCP (screenshots, snapshots, console logs)
+.playwright-mcp/
+
+# Exports de teste gerados durante o desenvolvimento
+export*.html
+check-export.png
+
+# Screenshots de comparacao de fundos
+bg-*.png

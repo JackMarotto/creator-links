@@ -1,7 +1,0 @@
-[      58ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[     106ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
-[     219ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[     239ms] ReferenceError: g is not defined
-    at preencherFormularioAdmin (http://localhost:8912/Bio%20and%20pannel/Bio%20Linktree%20%26%20Painel%20Admin.html:1375:7)
-    at HTMLDocument.inicializar (http://localhost:8912/Bio%20and%20pannel/Bio%20Linktree%20%26%20Painel%20Admin.html:664:7)
-[   69430ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0

@@ -1,9 +1,0 @@
-[      40ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[     144ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
-[     256ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[     341ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[     529ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[   12376ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[   23205ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[   45765ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
-[   60493ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8912/Bio%20and%20pannel/Bio%20and%20pannel/Fotos/foto-5.png:0
