@@ -339,6 +339,14 @@
                 </select>
               </div>
             </div>
+            <div class="pt-1">
+              <label class="block text-xs font-medium text-zinc-300 mb-1">Intervalo de Verificação</label>
+              <div class="flex gap-2 items-center">
+                <input type="number" id="cfgCheckIntervalMs" min="15000" step="1000" oninput="atualizarRotuloIntervaloChecagem()" class="w-36 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition font-mono">
+                <span id="cfgCheckIntervalMsLabel" class="text-[11px] text-purple-300 font-mono">60000 ms = 00:01:00 (hh:mm:ss)</span>
+              </div>
+              <p class="text-[11px] text-zinc-500 mt-1">Mínimo de 15000 ms (15s). Valores menores são ajustados automaticamente.</p>
+            </div>
             <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-purple-900/30 text-xs text-zinc-400">
               <span id="twitchLastCheckedText">Aguardando verificação...</span>
               <button onclick="verificarStatusTwitch(true)" class="px-2.5 py-1 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 text-[11px] font-medium transition flex items-center gap-1">
@@ -639,6 +647,7 @@
       username: "@omarotto",
       twitchUsername: "omarotto",
       autoDetectLive: true,
+      checkIntervalMs: 60000,
       avatarUrl: "Bio and pannel/Fotos/foto-5.png",
       bio: "Criador de conteúdo, Gamer & Desenvolvedor de Widgets.\nAcompanhe minhas lives e confira os projetos nos links abaixo!",
       statusTag: "🔴 AO VIVO NA TWITCH",
@@ -667,17 +676,79 @@
         { id: "s_tiktok", name: "TikTok", icon: "fa-brands fa-tiktok", url: "https://tiktok.com/@omarotto", active: false }
       ],
       links: [
-        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
-        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
-        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
-        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" },
-        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" }
+        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" }
       ]
     };
 
     let appConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     let twitchLiveState = { isLive: false, uptime: "", lastChecked: null };
     let iconPickerTarget = null; // { tipo: 'link' | 'social', id }
+
+    // Estado de live POR ITEM: { [itemId]: { isLive, uptime, platform, lastChecked } }.
+    // O `twitchLiveState` acima continua existindo para o indicador da Seção 0, que
+    // reflete apenas o canal principal definido em `appConfig.twitchUsername`.
+    let liveStates = {};
+    let liveIntervalId = null;
+
+    // Plataformas com consulta pública via API aberta.
+    // `url: null` = a plataforma ainda não tem endpoint público funcional; o item
+    // é ignorado silenciosamente (sem fetch e sem erro no console) até existir um.
+    // Verificado em 2026-10: a DecAPI só expõe Twitch. Kick e YouTube não têm rota
+    // (`decapi.me/kick/uptime/*` e `decapi.me/youtube/uptime/*` retornam 404), e o
+    // feed oficial do YouTube não envia header CORS, o que bloquearia o fetch numa
+    // página estática. Basta preencher `url` aqui quando o endpoint existir.
+    const PLATAFORMAS_LIVE = {
+      twitch:  { url: 'https://decapi.me/twitch/uptime/',  re: /twitch\.tv\/([^/?#\s/]+)/i },
+      kick:    { url: null, re: /kick\.com\/([^/?#\s/]+)/i },
+      youtube: { url: null, re: /(?:youtube\.com\/(?:c\/|channel\/)?(@[^/?#\s/]+)|youtu\.be\/([^/?#\s/]+))/i }
+    };
+    const PLATAFORMAS_LIVE_OPCOES = ['auto', 'twitch', 'kick', 'youtube'];
+
+    // Termos temporais em inglês -> PT-BR. DecAPI devolve "1 hour 23 minutes",
+    // que precisa ser traduzido antes de aparecer no badge.
+    // Cada par é [plural, singular] — "1 year" precisa virar "ano", não "anos".
+    const UPTRIME_PT_BR = [
+      [/years/g, /year/g, 'anos', 'ano'],
+      [/months/g, /month/g, 'meses', 'mês'],
+      [/days/g, /day/g, 'dias', 'dia'],
+      [/hours/g, /hour/g, 'horas', 'hora'],
+      [/minutes/g, /minute/g, 'minutos', 'minuto'],
+      [/seconds/g, /second/g, 'segundos', 'segundo']
+    ];
+
+    function formatarUptimePtBr(uptimeStr) {
+      if (!uptimeStr) return '';
+      return UPTRIME_PT_BR.reduce((acc, [rePlural, reSingular, ptPlural, ptSingular]) =>
+        acc.replace(rePlural, ptPlural).replace(reSingular, ptSingular), String(uptimeStr).trim());
+    }
+
+    // Milissegundos -> "hh:mm:ss" (ex.: 60000 -> "00:01:00").
+    function formatarMsParaHms(ms) {
+      const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+      const h = String(Math.floor(total / 3600)).padStart(2, '0');
+      const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+      const s = String(total % 60).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    // Resolve qual plataforma consultar: a escolha explícita do usuário vence;
+    // em 'auto', casa a URL contra os domínios conhecidos.
+    function resolverPlataformaLive(item) {
+      if (!item) return null;
+      const explicita = item.livePlatform && item.livePlatform !== 'auto' ? item.livePlatform : null;
+      const candidatas = explicita ? [explicita] : Object.keys(PLATAFORMAS_LIVE);
+      for (const chave of candidatas) {
+        const p = PLATAFORMAS_LIVE[chave];
+        if (!p) continue;
+        const m = (item.url || '').match(p.re);
+        if (m) return { plataforma: chave, config: p, identificador: m[1] || m[2] || '' };
+      }
+      return null;
+    }
 
     // Kick não possui ícone de marca no FontAwesome 6 Free -> usamos SVG inline.
     const KICK_ICON = "brand-kick";
@@ -713,7 +784,7 @@
       atualizarRelogioMockup();
 
       verificarStatusTwitch(false);
-      setInterval(() => verificarStatusTwitch(false), 60000);
+      agendarChecagemLive();
       setInterval(atualizarRelogioMockup, 30000);
     }
 
@@ -864,7 +935,7 @@
       if (g('prevVerifiedBadge')) g('prevVerifiedBadge').style.backgroundColor = primary;
 
       let statusLabel = appConfig.statusTag || "🔴 AO VIVO NA TWITCH";
-      if (twitchLiveState.uptime) statusLabel += ` (${twitchLiveState.uptime})`;
+      if (twitchLiveState.uptime) statusLabel += ` (${formatarUptimePtBr(twitchLiveState.uptime)})`;
 
       const pubBadgeWrap = g('pubLiveBadgeWrap');
       const prevBadgeWrap = g('prevLiveBadgeWrap');
@@ -1392,11 +1463,11 @@
       if (pubContainer) pubContainer.innerHTML = '';
       if (prevContainer) prevContainer.innerHTML = '';
 
-      const isLiveNow = appConfig.autoDetectLive && twitchLiveState.isLive;
-
       (appConfig.links || []).filter(l => l.active).forEach(item => {
-        const isTwitchLink = (item.url && item.url.toLowerCase().includes('twitch.tv/')) || (item.icon && item.icon.includes('twitch'));
-        const linkIsLive = isLiveNow && isTwitchLink;
+        // Estado de live específico deste item (vários canais podem estar no ar).
+        const st = appConfig.autoDetectLive ? liveStates[item.id] : null;
+        const linkIsLive = !!(st && st.isLive);
+        const uptimePtBr = formatarUptimePtBr(st && st.uptime);
 
         let badgeHtml = '';
         if (linkIsLive) {
@@ -1406,8 +1477,8 @@
         }
 
         let subtitleText = item.subtitle || '';
-        if (linkIsLive && twitchLiveState.uptime) {
-          subtitleText = `🔴 Ao vivo agora há ${twitchLiveState.uptime}!`;
+        if (linkIsLive && uptimePtBr) {
+          subtitleText = `🔴 Ao vivo agora há ${uptimePtBr}!`;
         }
 
         const temImagem = !!(item.imageUrl && item.imageUrl.trim());
@@ -1540,6 +1611,8 @@
       s('cfgUsername', appConfig.username || "");
       s('cfgTwitchUsername', appConfig.twitchUsername || "");
       s('cfgAutoDetectLive', appConfig.autoDetectLive ? "true" : "false");
+      s('cfgCheckIntervalMs', appConfig.checkIntervalMs || 60000);
+      atualizarRotuloIntervaloChecagem();
       s('cfgAvatarUrl', appConfig.avatarUrl || "");
       s('cfgBio', appConfig.bio || "");
       s('cfgBioColor', appConfig.bioColor || "#a1a1aa");
@@ -1700,9 +1773,24 @@
             </select></div>
             ` : `
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título do Botão</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino</label><input type="text" value="${escapeHtml(item.url)}" oninput="atualizarLinkCampo(${index}, 'url', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino</label><input type="text" value="${escapeHtml(item.url)}" oninput="atualizarLinkCampo(${index}, 'url', this.value); atualizarVisibilidadeLiveItem(${index})" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Subtítulo (Opcional)</label><input type="text" value="${escapeHtml(item.subtitle || '')}" oninput="atualizarLinkCampo(${index}, 'subtitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Badge (Ex: NOVO)</label><input type="text" value="${escapeHtml(item.badge || '')}" oninput="atualizarLinkCampo(${index}, 'badge', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+          </div>
+          <div id="liveBoxWrap_${index}" class="mt-2 ${resolverPlataformaLive(item) ? '' : 'hidden'}">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" ${item.syncLiveStatus ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'syncLiveStatus', this.checked); atualizarVisibilidadeSelectPlataforma(${index})" class="w-3.5 h-3.5 accent-purple-600 cursor-pointer">
+              <span class="text-[11px] text-zinc-300">Sincronizar status de live automaticamente para este link</span>
+            </label>
+            <div id="livePlatWrap_${index}" class="mt-1.5 ml-5 ${item.syncLiveStatus ? '' : 'hidden'}">
+              <label class="block text-[10px] font-medium text-zinc-500 mb-0.5">Plataforma</label>
+              <select onchange="atualizarLinkCampo(${index}, 'livePlatform', this.value)" class="bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-purple-500">
+                <option value="auto" ${(!item.livePlatform || item.livePlatform === 'auto') ? 'selected' : ''}>Automático (pelo domínio da URL)</option>
+                <option value="twitch" ${item.livePlatform === 'twitch' ? 'selected' : ''}>Twitch</option>
+                <option value="kick" ${item.livePlatform === 'kick' ? 'selected' : ''}>Kick (indisponível)</option>
+                <option value="youtube" ${item.livePlatform === 'youtube' ? 'selected' : ''}>YouTube (indisponível)</option>
+              </select>
+            </div>
           </div>`}
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
             <div class="sm:col-span-3"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem (opcional)</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
@@ -1716,7 +1804,7 @@
     }
 
     function adicionarNovoLink() {
-      appConfig.links.push({ id: "link_" + Date.now(), title: "Novo Item Customizado", subtitle: "Breve descrição do destino", url: "https://", icon: "fa-solid fa-link", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left" });
+      appConfig.links.push({ id: "link_" + Date.now(), title: "Novo Item Customizado", subtitle: "Breve descrição do destino", url: "https://", icon: "fa-solid fa-link", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
       salvarConfiguracao();
       renderizarListaLinksAdmin();
       dispararAtualizacaoGeral();
@@ -1741,7 +1829,7 @@
 >**Consoles**
 * [Nintendo Switch](https://meli.la/2Mm8RhW)
 * [PlayStation 5](https://meli.la/2PHHSFy)`;
-      appConfig.links.push({ id: "txt_" + Date.now(), type: "texto", title: "Meu Setup", subtitle: "", url: "", icon: "", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", content: exemplo, textColor: "", textSize: "md", textAlign: "left" });
+      appConfig.links.push({ id: "txt_" + Date.now(), type: "texto", title: "Meu Setup", subtitle: "", url: "", icon: "", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", content: exemplo, textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
       salvarConfiguracao();
       dispararAtualizacaoGeral();
       mostrarToast('Item de texto adicionado!');
@@ -1831,6 +1919,9 @@
       if (typeof c.footerColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(c.footerColor)) c.footerColor = DEFAULT_CONFIG.footerColor;
       if (typeof c.footerText !== 'string') c.footerText = "";
       if (typeof c.showFooter !== 'boolean') c.showFooter = DEFAULT_CONFIG.showFooter;
+      // Intervalo de checagem: configs antigos não têm a chave; o piso de 15s
+      // evita laço apertado demais contra a API pública.
+      c.checkIntervalMs = Math.max(15000, Number(c.checkIntervalMs) || 60000);
 
       (c.links || []).forEach(item => {
         if (!('glowColor' in item)) item.glowColor = "";
@@ -1843,6 +1934,8 @@
         if (typeof item.textColor !== 'string' || (item.textColor && !/^#[0-9a-f]{6}$/i.test(item.textColor))) item.textColor = "";
         if (!['sm', 'md', 'lg'].includes(item.textSize)) item.textSize = 'md';
         if (!['left', 'center'].includes(item.textAlign)) item.textAlign = 'left';
+        if (typeof item.syncLiveStatus !== 'boolean') item.syncLiveStatus = false;
+        if (!PLATAFORMAS_LIVE_OPCOES.includes(item.livePlatform)) item.livePlatform = 'auto';
       });
       return c;
     }
@@ -1995,10 +2088,9 @@
       if (indicator && isManualClick) indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-yellow-400 animate-spin"></span> Verificando...`;
 
       try {
-        const response = await fetch(`https://decapi.me/twitch/uptime/${channel}`);
+        const response = await fetchUptimeComTimeout(`https://decapi.me/twitch/uptime/${channel}`);
         const text = await response.text();
-        const lower = text.toLowerCase();
-        const isOffline = lower.includes('offline') || lower.includes('not found') || lower.includes('error');
+        const isOffline = textoEhOffline(text);
 
         if (!isOffline && response.ok) {
           twitchLiveState.isLive = true;
@@ -2013,7 +2105,7 @@
         if (indicator) {
           if (twitchLiveState.isLive) {
             indicator.className = "text-xs px-2.5 py-1 rounded-full bg-red-950 text-red-300 border border-red-500/50 flex items-center gap-1.5 font-bold animate-pulse";
-            indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> AO VIVO (${twitchLiveState.uptime})`;
+            indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> AO VIVO (${formatarUptimePtBr(twitchLiveState.uptime)})`;
           } else {
             indicator.className = "text-xs px-2.5 py-1 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-700 flex items-center gap-1.5 font-medium";
             indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-zinc-600"></span> Canal Offline`;
@@ -2027,6 +2119,107 @@
       }
 
       dispararAtualizacaoGeral();
+      return twitchLiveState;
+    }
+
+    // Um fetch pendurado travaria o item para sempre; o corte evita isso.
+    const TIMEOUT_CHECAGEM_MS = 8000;
+
+    async function fetchUptimeComTimeout(url) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), TIMEOUT_CHECAGEM_MS);
+      try {
+        return await fetch(url, { signal: ctrl.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function textoEhOffline(text) {
+      const lower = String(text || '').toLowerCase();
+      return lower.includes('offline') || lower.includes('not found') || lower.includes('error');
+    }
+
+    // Checagem de live para TODOS os itens marcados com `syncLiveStatus`.
+    // Cada item resolve sua própria plataforma e tem estado independente, então
+    // vários canais podem estar no ar ao mesmo tempo. Plataformas sem endpoint
+    // configurado em PLATAFORMAS_LIVE são puladas sem fazer requisição.
+    async function checarLiveItens() {
+      if (!appConfig.autoDetectLive) return;
+
+      const alvos = (appConfig.links || [])
+        .filter(item => item.active && item.type !== 'texto' && item.syncLiveStatus)
+        .map(item => ({ item, alvo: resolverPlataformaLive(item) }))
+        .filter(x => x.alvo && x.alvo.config.url && x.alvo.identificador);
+
+      if (alvos.length === 0) return;
+
+      await Promise.all(alvos.map(async ({ item, alvo }) => {
+        try {
+          const response = await fetchUptimeComTimeout(alvo.config.url + encodeURIComponent(alvo.identificador));
+          const text = await response.text();
+          const isLive = response.ok && !textoEhOffline(text);
+          liveStates[item.id] = {
+            isLive,
+            uptime: isLive ? text.trim() : '',
+            platform: alvo.plataforma,
+            lastChecked: new Date()
+          };
+        } catch (err) {
+          // Timeout ou falha de rede: mantém o último estado conhecido em vez de
+          // apagar o badge por um instante e voltar.
+          const anterior = liveStates[item.id];
+          liveStates[item.id] = {
+            isLive: anterior ? anterior.isLive : false,
+            uptime: anterior ? anterior.uptime : '',
+            platform: alvo.plataforma,
+            lastChecked: new Date(),
+            erro: true
+          };
+        }
+      }));
+
+      // Um único re-render no fim, e não um por item.
+      dispararAtualizacaoGeral();
+    }
+
+    function agendarChecagemLive() {
+      if (liveIntervalId) clearInterval(liveIntervalId);
+      liveIntervalId = setInterval(checarLiveItens, appConfig.checkIntervalMs || 60000);
+    }
+
+    function atualizarRotuloIntervaloChecagem() {
+      const input = document.getElementById('cfgCheckIntervalMs');
+      const el = document.getElementById('cfgCheckIntervalMsLabel');
+      if (!input) return;
+      const ms = Math.max(15000, Number(input.value) || 60000);
+      if (el) el.innerText = `${ms} ms = ${formatarMsParaHms(ms)} (hh:mm:ss)`;
+      // Só grava e reinicia o timer quando o valor efetivo muda, para não
+      // disparar clearInterval a cada tecla digitada no campo.
+      if (ms !== appConfig.checkIntervalMs) {
+        appConfig.checkIntervalMs = ms;
+        input.value = ms;
+        salvarConfiguracao();
+        agendarChecagemLive();
+      }
+    }
+
+    // Mostra o par (checkbox + select de plataforma) apenas quando a URL do item
+    // é de uma plataforma compatível. Não reconstrói a lista inteira — só alterna
+    // a visibilidade — para não roubar o foco de quem está digitando na URL.
+    function atualizarVisibilidadeLiveItem(index) {
+      const item = (appConfig.links || [])[index];
+      if (!item) return;
+      const wrapper = document.getElementById(`liveBoxWrap_${index}`);
+      if (!wrapper) return;
+      wrapper.classList.toggle('hidden', !resolverPlataformaLive(item));
+    }
+
+    // O select de plataforma só faz sentido com o checkbox marcado.
+    function atualizarVisibilidadeSelectPlataforma(index) {
+      const item = (appConfig.links || [])[index];
+      const wrap = document.getElementById(`livePlatWrap_${index}`);
+      if (wrap) wrap.classList.toggle('hidden', !(item && item.syncLiveStatus));
     }
 
     function popularGradeIcones() {
@@ -2121,6 +2314,30 @@
       mostrarToast("Link copiado para a área de transferência!");
     }
 
+    // Lista de alvos de live embutida no HTML exportado: só entra quem tem
+    // `syncLiveStatus` ligado E plataforma com endpoint público disponível.
+    function exportAlvosLive(cfg, canalPrincipal) {
+      return (cfg.links || [])
+        .filter(l => l.active && l.type !== 'texto' && l.syncLiveStatus)
+        .map(l => {
+          const alvo = resolverPlataformaLive(l);
+          if (!alvo || !alvo.config.url || !alvo.identificador) return null;
+          return {
+            id: l.id,
+            plataforma: alvo.plataforma,
+            url: alvo.config.url,
+            identificador: alvo.identificador,
+            href: l.url,
+            btnId: `liveBtn_${l.id}`,
+            badgeId: `liveBadge_${l.id}`,
+            subId: `liveSub_${l.id}`,
+            iconId: `liveIcon_${l.id}`,
+            isPrincipal: alvo.identificador.toLowerCase() === canalPrincipal
+          };
+        })
+        .filter(Boolean);
+    }
+
     function gerarCodigoHTMLPronto() {
       const cfg = appConfig;
       const channel = (cfg.twitchUsername || 'omarotto').trim().toLowerCase();
@@ -2147,7 +2364,18 @@
           linksHtml += `<div style="width:100%;text-align:${alin};font-size:${tam};color:#a1a1aa;line-height:1.65;word-break:break-word;">${markdownParaHtml(l.content, { corBarra })}</div>\n`;
           return;
         }
-        const isTwitch = (l.url && l.url.toLowerCase().includes('twitch.tv/')) || (l.icon && l.icon.includes('twitch'));
+        // Item monitorado: só recebe os hooks de live se `syncLiveStatus` estiver ligado
+// E a plataforma resolvida tiver endpoint público. Os ids são derivados do id do
+        // item, então vários canais podem ficar "ao vivo" ao mesmo tempo sem colidir.
+        const alvoLive = l.syncLiveStatus ? resolverPlataformaLive(l) : null;
+        const monitoraLive = !!(alvoLive && alvoLive.config.url);
+        const liveBadgeId = monitoraLive ? `liveBadge_${l.id}` : '';
+        const liveSubId = monitoraLive ? `liveSub_${l.id}` : '';
+        const liveIconId = monitoraLive ? `liveIcon_${l.id}` : '';
+        const liveBtnId = monitoraLive ? `liveBtn_${l.id}` : '';
+        // Sem hook de live, não emite atributo id vazio no HTML exportado.
+        const attrLive = (nome, valor) => valor ? ` id="${valor}"` : '';
+        const isTwitch = monitoraLive;
         const isHl = l.highlight;
         const glowCor = (l.glowColor && l.glowColor.trim()) || cfg.primaryColor || '#9146FF';
         const glowRgb = hexToRgbTriplet(glowCor);
@@ -2165,13 +2393,13 @@
         } else if (temImg && posImg === 'left') {
           midiaHtml = `<img src="${escapeHtml(normalizarUrlImagem(l.imageUrl, ''))}" alt="" loading="lazy" onerror="this.style.display='none'" style="${getImgEstiloThumb(l)}">`;
         } else {
-          midiaHtml = `<div id="${isTwitch ? 'twitchIconBox' : ''}" style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
+          midiaHtml = `<div${attrLive('liveIcon', liveIconId)} style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
         }
 
         const blocoTexto = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; min-width: 0;">
                 <div style="min-width: 0; text-align: left;">
-                  <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span id="${isTwitch ? 'twitchBadgeTag' : ''}">${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
-                  <div id="${isTwitch ? 'twitchSubText' : ''}" style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
+                  <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
+                  <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
                 </div>
                 <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>
               </div>`;
@@ -2184,8 +2412,8 @@
           : `<div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
               ${midiaHtml}
               <div style="min-width: 0; text-align: left;">
-                <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span id="${isTwitch ? 'twitchBadgeTag' : ''}">${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
-                <div id="${isTwitch ? 'twitchSubText' : ''}" style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
+                <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
+                <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
               </div>
             </div>
             <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>`;
@@ -2195,7 +2423,7 @@
           : '';
 
         linksHtml += `
-      <a id="${isTwitch ? 'twitchMainBtn' : ''}" href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      <a${attrLive('liveBtn', liveBtnId)} href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         ${conteudo}
       </a>`;
       });
@@ -2250,34 +2478,112 @@
   <script>
     const channelName = "${channel}";
     const autoDetect = ${cfg.autoDetectLive ? 'true' : 'false'};
-    async function checkTwitchLive() {
-      if (!autoDetect || !channelName) return;
-      try {
-        const res = await fetch('https://decapi.me/twitch/uptime/' + channelName);
-        const text = await res.text();
-        const isOffline = text.toLowerCase().includes('offline') || text.toLowerCase().includes('not found') || text.toLowerCase().includes('error');
-        
-        const badgeWrap = document.getElementById('liveBadgeWrap');
-        const badgeText = document.getElementById('liveBadgeText');
-        const twitchBtn = document.getElementById('twitchMainBtn');
-        const twitchIconBox = document.getElementById('twitchIconBox');
-        const twitchBadgeTag = document.getElementById('twitchBadgeTag');
-        const twitchSubText = document.getElementById('twitchSubText');
+    const checkIntervalMs = ${cfg.checkIntervalMs || 60000};
+    const statusTag = ${JSON.stringify(cfg.statusTag || '🔴 AO VIVO NA TWITCH')};
 
-        if (!isOffline && res.ok) {
-          if (badgeWrap) badgeWrap.style.display = 'block';
-          if (badgeText) badgeText.innerText = '🔴 AO VIVO NA TWITCH (' + text.trim() + ')';
-          if (twitchBtn) { twitchBtn.style.borderColor = '#ef4444'; twitchBtn.style.background = 'rgba(127, 29, 29, 0.4)'; twitchBtn.classList.add('live-pulse'); }
-          if (twitchIconBox) twitchIconBox.style.background = '#ef4444';
-          if (twitchBadgeTag) twitchBadgeTag.innerHTML = '<span style="font-size: 10px; font-weight: 800; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">AO VIVO</span>';
-          if (twitchSubText) { twitchSubText.innerText = 'Transmitindo agora! Clique para assistir.'; twitchSubText.style.color = '#fca5a5'; }
-        } else {
-          if (badgeWrap) badgeWrap.style.display = 'none';
-        }
-      } catch (e) {}
+    // Espelha o PLATAFORMAS_LIVE do painel. Só entram plataformas com API pública
+    // real; as demais ficam de fora e o item simplesmente não é monitorado.
+    const ALVOS_LIVE = ${JSON.stringify(exportAlvosLive(cfg, channel))};
+
+    const UPTRIME_PT_BR = [[/years/g,/year/g,'anos','ano'],[/months/g,/month/g,'meses','mês'],[/days/g,/day/g,'dias','dia'],[/hours/g,/hour/g,'horas','hora'],[/minutes/g,/minute/g,'minutos','minuto'],[/seconds/g,/second/g,'segundos','segundo']];
+    function formatarUptimePtBr(s) {
+      if (!s) return '';
+      return UPTRIME_PT_BR.reduce(function (acc, p) { return acc.replace(p[0], p[2]).replace(p[1], p[3]); }, String(s).trim());
     }
-    checkTwitchLive();
-    setInterval(checkTwitchLive, 60000);
+
+    function textoEhOffline(text) {
+      const lower = String(text || '').toLowerCase();
+      return lower.includes('offline') || lower.includes('not found') || lower.includes('error');
+    }
+
+    const badgeWrap = document.getElementById('liveBadgeWrap');
+    const badgeText = document.getElementById('liveBadgeText');
+
+    // Guarda o conteúdo original de cada item para restaurar ao ficar offline.
+    const originais = ALVOS_LIVE.reduce(function (acc, alvo) {
+      const btn = document.getElementById(alvo.btnId);
+      const badgeTag = document.getElementById(alvo.badgeId);
+      const subText = document.getElementById(alvo.subId);
+      acc[alvo.id] = {
+        btn: btn ? btn.getAttribute('style') : null,
+        badge: badgeTag ? badgeTag.innerHTML : null,
+        sub: subText ? subText.innerText : null,
+        corSub: subText ? subText.style.color : null
+      };
+      return acc;
+    }, {});
+
+    function aplicarAoVivo(alvo, uptimePtBr) {
+      const btn = document.getElementById(alvo.btnId);
+      const iconBox = document.getElementById(alvo.iconId);
+      const badgeTag = document.getElementById(alvo.badgeId);
+      const subText = document.getElementById(alvo.subId);
+      if (btn) { btn.style.borderColor = '#ef4444'; btn.style.background = 'rgba(127, 29, 29, 0.4)'; btn.classList.add('live-pulse'); }
+      if (iconBox) iconBox.style.background = '#ef4444';
+      if (badgeTag) badgeTag.innerHTML = '<span style="font-size: 10px; font-weight: 800; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">AO VIVO</span>';
+      if (subText) { subText.innerText = '🔴 Ao vivo agora há ' + uptimePtBr + '!'; subText.style.color = '#fca5a5'; }
+    }
+
+    function restaurarItem(alvo) {
+      const orig = originais[alvo.id] || {};
+      const btn = document.getElementById(alvo.btnId);
+      const badgeTag = document.getElementById(alvo.badgeId);
+      const subText = document.getElementById(alvo.subId);
+      if (btn && orig.btn != null) { btn.setAttribute('style', orig.btn); btn.classList.remove('live-pulse'); }
+      if (badgeTag && orig.badge != null) badgeTag.innerHTML = orig.badge;
+      if (subText && orig.sub != null) { subText.innerText = orig.sub; subText.style.color = orig.corSub || '#a1a1aa'; }
+    }
+
+    async function checarLiveItens() {
+      if (!autoDetect) return;
+      let algumAoVivo = false;
+
+      await Promise.all(ALVOS_LIVE.map(async function (alvo) {
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(function () { ctrl.abort(); }, 8000);
+          let res;
+          try {
+            res = await fetch(alvo.url + encodeURIComponent(alvo.identificador), { signal: ctrl.signal });
+          } finally {
+            clearTimeout(timer);
+          }
+          const text = await res.text();
+          const aoVivo = res.ok && !textoEhOffline(text);
+          if (aoVivo) {
+            algumAoVivo = true;
+            aplicarAoVivo(alvo, formatarUptimePtBr(text.trim()));
+          } else {
+            restaurarItem(alvo);
+          }
+        } catch (e) {
+          // Timeout/rede: mantém o estado anterior em vez de piscar para offline.
+        }
+      }));
+
+      if (badgeWrap && badgeText) {
+        const principal = ALVOS_LIVE.filter(function (a) { return a.isPrincipal; });
+        const alvoPrincipal = principal.length ? principal[0] : ALVOS_LIVE[0];
+        let uptimePrincipal = '';
+        if (alvoPrincipal) {
+          const btn = document.getElementById(alvoPrincipal.btnId);
+          if (btn && btn.classList.contains('live-pulse')) {
+            const sub = document.getElementById(alvoPrincipal.subId);
+            if (sub) uptimePrincipal = sub.innerText.replace(/^🔴 Ao vivo agora há /, '').replace(/!$/, '');
+          }
+        }
+        if (algumAoVivo) {
+          badgeWrap.style.display = 'block';
+          badgeText.innerText = statusTag + (uptimePrincipal ? ' (' + uptimePrincipal + ')' : '');
+          badgeWrap.querySelector('a').href = alvoPrincipal ? alvoPrincipal.href : 'https://twitch.tv/' + channelName;
+        } else {
+          badgeWrap.style.display = 'none';
+        }
+      }
+    }
+
+    checarLiveItens();
+    setInterval(checarLiveItens, checkIntervalMs);
   <\/script>
 </body>
 </html>`;
