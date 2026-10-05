@@ -3,6 +3,7 @@
   "username": "@omarotto",
   "twitchUsername": "omarotto",
   "autoDetectLive": true,
+  "checkIntervalMs": 200000,
   "avatarUrl": "https://github.com/JackMarotto/creator-links/blob/main/Bio%20and%20pannel/Fotos/foto-5.png",
   "bio": "Criador de conteúdo, Gamer & Desenvolvedor de Widgets.\nAcompanhe minhas lives e confira os projetos nos links abaixo!",
   "statusTag": "🔴 AO VIVO NA TWITCH",
@@ -41,7 +42,7 @@
       "id": "s_discord",
       "name": "Discord",
       "icon": "fa-brands fa-discord",
-      "url": "https://discord.gg",
+      "url": "https://discord.com/invite/hfBUTK45E6",
       "active": true,
       "hoverColor": "#0b68fe"
     },
@@ -97,7 +98,9 @@
       "content": "",
       "textColor": "",
       "textSize": "md",
-      "textAlign": "left"
+      "textAlign": "left",
+      "syncLiveStatus": true,
+      "livePlatform": "twitch"
     },
     {
       "id": "link_1791045432553",
@@ -117,7 +120,9 @@
       "content": "",
       "textColor": "",
       "textSize": "md",
-      "textAlign": "left"
+      "textAlign": "left",
+      "syncLiveStatus": false,
+      "livePlatform": "auto"
     },
     {
       "id": "link_discord",
@@ -137,7 +142,9 @@
       "content": "",
       "textColor": "",
       "textSize": "md",
-      "textAlign": "left"
+      "textAlign": "left",
+      "syncLiveStatus": false,
+      "livePlatform": "auto"
     },
     {
       "id": "link_setup",
@@ -157,7 +164,9 @@
       "content": "",
       "textColor": "",
       "textSize": "md",
-      "textAlign": "left"
+      "textAlign": "left",
+      "syncLiveStatus": false,
+      "livePlatform": "auto"
     },
     {
       "id": "link_pix",
@@ -177,7 +186,9 @@
       "content": "",
       "textColor": "",
       "textSize": "md",
-      "textAlign": "left"
+      "textAlign": "left",
+      "syncLiveStatus": false,
+      "livePlatform": "auto"
     },
     {
       "id": "link_widgets",
@@ -197,7 +208,9 @@
       "content": "",
       "textColor": "",
       "textSize": "md",
-      "textAlign": "left"
+      "textAlign": "left",
+      "syncLiveStatus": false,
+      "livePlatform": "auto"
     }
   ],
   "socialHoverColor": "#98893e"
