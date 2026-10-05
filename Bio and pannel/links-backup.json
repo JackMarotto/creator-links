@@ -7,6 +7,10 @@
   "bio": "Criador de conteúdo, Gamer & Desenvolvedor de Widgets.\nAcompanhe minhas lives e confira os projetos nos links abaixo!",
   "statusTag": "🔴 AO VIVO NA TWITCH",
   "primaryColor": "#9146ff",
+  "bioColor": "#ffffff",
+  "footerText": "",
+  "footerColor": "#ffffff",
+  "showFooter": false,
   "bgColor": "#0e0e10",
   "bgType": "aurora-animated",
   "bgColor2": "#ff0000",
@@ -14,7 +18,7 @@
   "bgPatternOpacity": 0.4,
   "bgPatternScale": 1.5,
   "bgSpeed": 3,
-  "buttonRadius": "rounded-full",
+  "buttonRadius": "rounded-2xl",
   "buttonStyle": "glass",
   "socials": [
     {
@@ -22,56 +26,63 @@
       "name": "Twitch",
       "icon": "fa-brands fa-twitch",
       "url": "https://twitch.tv/omarotto",
-      "active": true
+      "active": true,
+      "hoverColor": ""
     },
     {
       "id": "s_youtube",
       "name": "YouTube",
       "icon": "fa-brands fa-youtube",
       "url": "https://youtube.com/@omarotto",
-      "active": true
+      "active": true,
+      "hoverColor": "#ff0000"
     },
     {
       "id": "s_discord",
       "name": "Discord",
       "icon": "fa-brands fa-discord",
       "url": "https://discord.gg",
-      "active": true
+      "active": true,
+      "hoverColor": "#0b68fe"
     },
     {
       "id": "s_x",
       "name": "Twitter / X",
       "icon": "fa-brands fa-x-twitter",
       "url": "https://x.com/omarotto",
-      "active": true
+      "active": true,
+      "hoverColor": "#000000"
     },
     {
       "id": "s_instagram",
       "name": "Instagram",
       "icon": "fa-brands fa-instagram",
       "url": "https://instagram.com/omarotto",
-      "active": true
+      "active": true,
+      "hoverColor": "#ec27c2"
     },
     {
       "id": "s_tiktok",
       "name": "TikTok",
       "icon": "fa-brands fa-tiktok",
       "url": "https://tiktok.com/@omarotto",
-      "active": false
+      "active": true,
+      "hoverColor": "#fd2666"
     },
     {
       "id": "social_1791043709792",
       "name": "Kick",
       "icon": "brand-kick",
       "url": "https://kick.com/omarotto",
-      "active": true
+      "active": true,
+      "hoverColor": "#6ef500"
     }
   ],
   "links": [
     {
       "id": "link_twitch_main",
       "title": "Canal de Lives na Twitch",
-      "subtitle": "Transmissões quase todos os dias às 19h",
+      "subtitle": "Transmissões quase todos os dias às 16h",
       "url": "https://twitch.tv/omarotto",
       "icon": "fa-brands fa-twitch",
       "highlight": true,
@@ -81,12 +92,17 @@
       "imageUrl": "",
       "imagePosition": "left",
       "imageSize": "md",
-      "imageFit": "cover"
+      "imageFit": "cover",
+      "type": "link",
+      "content": "",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left"
     },
     {
       "id": "link_1791045432553",
       "title": "Canal de Lives na Kick",
-      "subtitle": "Breve descrição do destino",
+      "subtitle": "Lives na Kick também, ao mesmo tempo!",
       "url": "https://kick.com/omarotto",
       "icon": "brand-kick",
       "highlight": true,
@@ -96,37 +112,32 @@
       "imageUrl": "",
       "imagePosition": "left",
       "imageSize": "md",
-      "imageFit": "cover"
+      "imageFit": "cover",
+      "type": "link",
+      "content": "",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left"
     },
     {
       "id": "link_discord",
       "title": "Comunidade no Discord",
       "subtitle": "Participe de sorteios, bate-papo e novidades",
-      "url": "https://discord.gg",
+      "url": "https://discord.com/invite/hfBUTK45E6",
       "icon": "fa-brands fa-discord",
       "highlight": false,
-      "badge": "VIP",
+      "badge": "",
       "active": true,
       "glowColor": "",
       "imageUrl": "",
       "imagePosition": "left",
       "imageSize": "md",
-      "imageFit": "cover"
-    },
-    {
-      "id": "link_widgets",
-      "title": "Widgets Gratuitos para OBS",
-      "subtitle": "Widgets de jogo atual, metas e avisos de live",
-      "url": "https://github.com/jackmarotto/Streamer-Bio-and-pannels",
-      "icon": "fa-solid fa-gamepad",
-      "highlight": false,
-      "badge": "Novo",
-      "active": true,
-      "glowColor": "",
-      "imageUrl": "",
-      "imagePosition": "left",
-      "imageSize": "md",
-      "imageFit": "cover"
+      "imageFit": "cover",
+      "type": "link",
+      "content": "",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left"
     },
     {
       "id": "link_setup",
@@ -141,22 +152,53 @@
       "imageUrl": "",
       "imagePosition": "left",
       "imageSize": "md",
-      "imageFit": "cover"
+      "imageFit": "cover",
+      "type": "link",
+      "content": "",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left"
     },
     {
       "id": "link_pix",
       "title": "Mande uma mensagem / Pix",
       "subtitle": "Apoie a produção de conteúdo do canal",
-      "url": "https://tipa.ai",
+      "url": "https://livepix.gg/omarotto",
       "icon": "fa-solid fa-qrcode",
       "highlight": false,
       "badge": "Apoio",
       "active": true,
       "glowColor": "",
+      "imageUrl": "https://panels.twitch.tv/panel-144757590-image-df463359-d199-441a-85a6-ccc3ed978964",
+      "imagePosition": "bottom",
+      "imageSize": "md",
+      "imageFit": "contain",
+      "type": "link",
+      "content": "",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left"
+    },
+    {
+      "id": "link_widgets",
+      "title": "Widgets",
+      "subtitle": "Seleção de Widgets para Streamers",
+      "url": "",
+      "icon": "fa-solid fa-grip",
+      "highlight": false,
+      "badge": "Em breve",
+      "active": true,
+      "glowColor": "",
       "imageUrl": "",
       "imagePosition": "left",
       "imageSize": "md",
-      "imageFit": "cover"
+      "imageFit": "cover",
+      "type": "link",
+      "content": "",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left"
     }
-  ]
+  ],
+  "socialHoverColor": "#98893e"
 }
