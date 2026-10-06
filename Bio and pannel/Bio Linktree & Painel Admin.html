@@ -676,11 +676,11 @@
         { id: "s_tiktok", name: "TikTok", icon: "fa-brands fa-tiktok", url: "https://tiktok.com/@omarotto", active: false }
       ],
       links: [
-        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" }
+        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" }
       ]
     };
 
@@ -1388,6 +1388,11 @@
       return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
     }
 
+    function resolverImagemDoItem(item) {
+      const original = normalizarUrlImagem(item && item.imageUrl, '');
+      return item && item.useFavicon ? resolverUrlImagemItem(original) : original;
+    }
+
     // Raio efetivo do card: pílula pura deforma cards em coluna com imagem alta
     // (top/bottom vira elipse); nesses casos cai para cantos arredondados seguros.
     function raioEfetivoItem(item) {
@@ -1520,25 +1525,25 @@
 
         const temImagem = !!(item.imageUrl && item.imageUrl.trim());
         const posicaoImg = getItemImagePosition(item);
-        const imgSrc = escapeHtml(resolverUrlImagemItem(normalizarUrlImagem(item.imageUrl, '')));
+        const imgSrc = escapeHtml(resolverImagemDoItem(item));
 
         const iconeBoxClasses = `w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400 group-hover:text-purple-300 group-hover:bg-purple-600/30')} transition duration-200`;
         const iconeBoxMock = `w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-purple-400')}`;
 
         let midiaPublica = '';
         if (temImagem && posicaoImg === 'left') {
-          midiaPublica = `<img src="${imgSrc}" alt="" loading="lazy" onerror="this.style.display='none'" class="${getImgClassesThumb(item, false)}">`;
+          midiaPublica = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesThumb(item, false)}">`;
         } else if (temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom')) {
-          midiaPublica = `<img src="${imgSrc}" alt="" loading="lazy" onerror="this.style.display='none'" class="${getImgClassesBanner(item, false)}">`;
+          midiaPublica = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesBanner(item, false)}">`;
         } else {
           midiaPublica = `<div class="${iconeBoxClasses}">${renderizarIcone(item.icon)}</div>`;
         }
 
         let midiaMock = '';
         if (temImagem && posicaoImg === 'left') {
-          midiaMock = `<img src="${imgSrc}" alt="" loading="lazy" onerror="this.style.display='none'" class="${getImgClassesThumb(item, true)}">`;
+          midiaMock = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesThumb(item, true)}">`;
         } else if (temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom')) {
-          midiaMock = `<img src="${imgSrc}" alt="" loading="lazy" onerror="this.style.display='none'" class="${getImgClassesBanner(item, true)}">`;
+          midiaMock = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesBanner(item, true)}">`;
         } else {
           midiaMock = `<div class="${iconeBoxMock}">${renderizarIcone(item.icon)}</div>`;
         }
@@ -1830,6 +1835,7 @@
             </div>
           </div>`}
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            <div class="sm:col-span-3 flex items-center gap-2"><label class="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" ${item.useFavicon ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'useFavicon', this.checked)" class="w-3.5 h-3.5 accent-purple-600"><span class="text-[11px] font-medium text-zinc-300">Usar favicon</span></label><span title="Ative para transformar URLs de sites, como twitch.tv ou github.com, no favicon do domínio. Desative para tentar carregar a URL original como imagem." class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-zinc-600 text-[10px] text-zinc-400 cursor-help">?</span></div>
             <div class="sm:col-span-3"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem (opcional)</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="left" ${(item.imagePosition || 'left') === 'left' ? 'selected' : ''}>Miniatura à Esquerda</option><option value="top" ${item.imagePosition === 'top' ? 'selected' : ''}>Banner Acima</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Banner Abaixo</option></select></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Enquadramento da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageFit', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="cover" ${(!item.imageFit || item.imageFit === 'cover') ? 'selected' : ''}>Preencher / Cortar</option><option value="contain" ${item.imageFit === 'contain' ? 'selected' : ''}>Inteira / Sem Cortar</option></select></div>
@@ -1841,7 +1847,7 @@
     }
 
     function adicionarNovoLink() {
-      appConfig.links.push({ id: "link_" + Date.now(), title: "Novo Item Customizado", subtitle: "Breve descrição do destino", url: "https://", icon: "fa-solid fa-link", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
+      appConfig.links.push({ id: "link_" + Date.now(), title: "Novo Item Customizado", subtitle: "Breve descrição do destino", url: "https://", icon: "fa-solid fa-link", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
       salvarConfiguracao();
       renderizarListaLinksAdmin();
       dispararAtualizacaoGeral();
@@ -1866,7 +1872,7 @@
 >**Consoles**
 * [Nintendo Switch](https://meli.la/2Mm8RhW)
 * [PlayStation 5](https://meli.la/2PHHSFy)`;
-      appConfig.links.push({ id: "txt_" + Date.now(), type: "texto", title: "Meu Setup", subtitle: "", url: "", icon: "", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", content: exemplo, textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
+      appConfig.links.push({ id: "txt_" + Date.now(), type: "texto", title: "Meu Setup", subtitle: "", url: "", icon: "", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, content: exemplo, textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
       salvarConfiguracao();
       dispararAtualizacaoGeral();
       mostrarToast('Item de texto adicionado!');
@@ -1889,6 +1895,7 @@
         item.imagePosition = item.imagePosition || 'left';
         item.imageSize = item.imageSize || 'md';
         item.imageFit = item.imageFit || 'cover';
+        item.useFavicon = item.useFavicon === true;
         if (!item.url) item.url = 'https://';
         if (!item.icon) item.icon = 'fa-solid fa-link';
       }
@@ -1963,6 +1970,7 @@
       (c.links || []).forEach(item => {
         if (!('glowColor' in item)) item.glowColor = "";
         if (!('imageUrl' in item)) item.imageUrl = "";
+        item.useFavicon = item.useFavicon === true;
         if (!['left', 'top', 'bottom'].includes(item.imagePosition)) item.imagePosition = 'left';
         if (!['sm', 'md', 'lg', 'banner'].includes(item.imageSize)) item.imageSize = 'md';
         if (!['cover', 'contain'].includes(item.imageFit)) item.imageFit = 'cover';
@@ -2425,12 +2433,14 @@
         const posImg = getItemImagePosition(l);
         const fit = getItemImageFit(l);
         let midiaHtml;
-        const imgSite = escapeHtml(resolverUrlImagemItem(normalizarUrlImagem(l.imageUrl, '')));
+        const imgSite = escapeHtml(resolverImagemDoItem(l));
+        const imgOriginal = escapeHtml(normalizarUrlImagem(l.imageUrl, ''));
         const fitSite = fit === 'contain' ? getImgEstiloBannerContido(l) : getImgEstiloBanner(150);
+        const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
         if (temImg && (posImg === 'top' || posImg === 'bottom')) {
-          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" onerror="this.style.display='none'" style="${fitSite}">`;
+          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${fitSite}">`;
         } else if (temImg && posImg === 'left') {
-          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" onerror="this.style.display='none'" style="${getImgEstiloThumb(l)}">`;
+          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${getImgEstiloThumb(l)}">`;
         } else {
           midiaHtml = `<div${attrLive('liveIcon', liveIconId)} style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
         }
