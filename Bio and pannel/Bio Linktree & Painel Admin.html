@@ -182,7 +182,7 @@
     
     <!-- 1. PÁGINA PÚBLICA -->
     <section id="sectionPreview" class="w-full flex flex-col items-center justify-center transition-all duration-300">
-      <div id="publicPageCanvas" class="w-full max-w-[580px] min-h-[820px] rounded-3xl p-6 sm:p-8 flex flex-col items-center relative transition-all duration-300 border border-zinc-800/60 shadow-2xl shadow-black/80 my-2 overflow-hidden">
+      <div id="publicPageCanvas" class="w-full max-w-[580px] md:max-w-3xl min-h-[820px] rounded-3xl p-6 sm:p-8 md:p-12 flex flex-col items-center relative transition-all duration-300 border border-zinc-800/60 shadow-2xl shadow-black/80 my-2 overflow-hidden">
         <div data-bg-layer class="empty:hidden"></div>
         
         <div id="pubLiveBadgeWrap" class="mb-4 hidden">
@@ -1339,11 +1339,20 @@
 
     // Banner (top/bottom): 'cover' trava a altura e corta; 'contain' devolve altura
     // proporcional com teto, garantindo que a imagem inteira apareça sem cortar cabeças/textos.
+    // No 'contain' o imageSize passa a mandar nas dimensões máximas (QR codes não viram pôsteres).
+    const CONTAIN_SIZES = {
+      sm:     { maxH: 112, maxW: 140 },
+      md:     { maxH: 176, maxW: 220 },
+      lg:     { maxH: 256, maxW: 340 },
+      banner: { maxH: 320, maxW: 0 } // 0 = largura total disponível
+    };
+
     function getImgClassesBanner(item, isMockup) {
       const altura = isMockup ? 'h-16' : 'h-32 sm:h-40';
-      return getItemImageFit(item) === 'contain'
-        ? `w-full h-auto max-h-[280px] object-contain bg-black/30 flex-shrink-0`
-        : `w-full ${altura} object-cover flex-shrink-0`;
+      if (getItemImageFit(item) !== 'contain') return `w-full ${altura} object-cover flex-shrink-0`;
+      const cs = CONTAIN_SIZES[item && item.imageSize] || CONTAIN_SIZES.md;
+      if (cs.maxW === 0) return `w-full h-auto max-h-[${cs.maxH}px] object-contain bg-black/30 flex-shrink-0`;
+      return `w-auto max-h-[${cs.maxH}px] max-w-[${cs.maxW}px] object-contain bg-black/30 flex-shrink-0 mx-auto`;
     }
 
     // Estilos inline equivalentes, para o index.html exportado (sem Tailwind).
@@ -1357,8 +1366,36 @@
       return `width: 100%; height: ${alturaPx}px; object-fit: cover; display: block;`;
     }
 
-    function getImgEstiloBannerContido() {
-      return `width: 100%; height: auto; max-height: 280px; object-fit: contain; background: rgba(0, 0, 0, 0.3); display: block;`;
+    // Espelho inline do CONTAIN_SIZES (o export não tem Tailwind).
+    function getImgEstiloBannerContido(item) {
+      const cs = CONTAIN_SIZES[(item && item.imageSize)] || CONTAIN_SIZES.md;
+      const largura = cs.maxW === 0 ? 'width: 100%;' : `width: auto; max-width: ${cs.maxW}px; margin-left: auto; margin-right: auto;`;
+      return `${largura} height: auto; max-height: ${cs.maxH}px; object-fit: contain; background: rgba(0, 0, 0, 0.3); display: block;`;
+    }
+
+    // Favicon automático: URL de site (sem extensão de imagem) resolve para o
+    // favicon 128px do Google; arquivo de imagem ou caminho local passa intacto.
+    function resolverUrlImagemItem(url) {
+      const u = (url || '').trim();
+      if (!u) return "";
+      if (!/^https?:\/\//i.test(u)) return url;
+      let hostname = '';
+      try { hostname = new URL(u).hostname; } catch (e) { return url; }
+      if (!hostname) return url;
+      const semQuery = u.split('?')[0].split('#')[0].toLowerCase();
+      const extsImg = ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.ico', '.bmp', '.avif'];
+      if (extsImg.some(ext => semQuery.endsWith(ext))) return url;
+      return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
+    }
+
+    // Raio efetivo do card: pílula pura deforma cards em coluna com imagem alta
+    // (top/bottom vira elipse); nesses casos cai para cantos arredondados seguros.
+    function raioEfetivoItem(item) {
+      if (appConfig.buttonRadius !== 'rounded-full') return appConfig.buttonRadius || 'rounded-2xl';
+      const pos = getItemImagePosition(item);
+      const temImagem = !!(item && item.imageUrl && item.imageUrl.trim());
+      if (temImagem && (pos === 'top' || pos === 'bottom')) return 'rounded-3xl';
+      return 'rounded-full';
     }
 
     function aplicarGlowNoElemento(el, item) {
@@ -1375,8 +1412,8 @@
     // para que o index.html gerado respeite os mesmos controles do painel.
     const BOTAO_RAIO_PX = { "rounded-full": "9999px", "rounded-3xl": "24px", "rounded-2xl": "16px", "rounded-xl": "12px", "rounded-lg": "8px", "rounded-md": "6px" };
 
-    function getEstiloBotaoInline(isHighlight, corBorda) {
-      const raio = BOTAO_RAIO_PX[appConfig.buttonRadius] || "16px";
+    function getEstiloBotaoInline(isHighlight, corBorda, item) {
+      const raio = BOTAO_RAIO_PX[raioEfetivoItem(item)] || "16px";
       const estilo = appConfig.buttonStyle || "glass";
       const borda = isHighlight ? `2px solid ${corBorda || appConfig.primaryColor || '#9146ff'}` : "1px solid #27272a";
       let bg, cor, sombra;
@@ -1410,8 +1447,8 @@
       return { estilo, over, out };
     }
 
-    function getEstiloBotaoClasses(isHighlight, isLiveTwitch, isMockup = false) {
-      const radius = appConfig.buttonRadius || "rounded-2xl";
+    function getEstiloBotaoClasses(isHighlight, isLiveTwitch, isMockup = false, item) {
+      const radius = raioEfetivoItem(item);
       const style = appConfig.buttonStyle || "glass";
       const padding = isMockup ? "p-2.5" : "p-4";
 
@@ -1483,7 +1520,7 @@
 
         const temImagem = !!(item.imageUrl && item.imageUrl.trim());
         const posicaoImg = getItemImagePosition(item);
-        const imgSrc = escapeHtml(normalizarUrlImagem(item.imageUrl, ''));
+        const imgSrc = escapeHtml(resolverUrlImagemItem(normalizarUrlImagem(item.imageUrl, '')));
 
         const iconeBoxClasses = `w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400 group-hover:text-purple-300 group-hover:bg-purple-600/30')} transition duration-200`;
         const iconeBoxMock = `w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-purple-400')}`;
@@ -1517,7 +1554,7 @@
           a.href = item.url;
           a.target = "_blank";
           a.rel = "noopener noreferrer";
-          a.className = getEstiloBotaoClasses(item.highlight, linkIsLive, false);
+          a.className = getEstiloBotaoClasses(item.highlight, linkIsLive, false, item);
           const layoutCol = temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom');
           if (layoutCol) a.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
           aplicarGlowNoElemento(a, item);
@@ -1570,7 +1607,7 @@
           const aPrev = document.createElement('a');
           aPrev.href = item.url;
           aPrev.target = "_blank";
-          aPrev.className = getEstiloBotaoClasses(item.highlight, linkIsLive, true);
+          aPrev.className = getEstiloBotaoClasses(item.highlight, linkIsLive, true, item);
           const mockCol = temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom');
           if (mockCol) aPrev.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
           aplicarGlowNoElemento(aPrev, item);
@@ -2388,10 +2425,12 @@
         const posImg = getItemImagePosition(l);
         const fit = getItemImageFit(l);
         let midiaHtml;
+        const imgSite = escapeHtml(resolverUrlImagemItem(normalizarUrlImagem(l.imageUrl, '')));
+        const fitSite = fit === 'contain' ? getImgEstiloBannerContido(l) : getImgEstiloBanner(150);
         if (temImg && (posImg === 'top' || posImg === 'bottom')) {
-          midiaHtml = `<img src="${escapeHtml(normalizarUrlImagem(l.imageUrl, ''))}" alt="" loading="lazy" onerror="this.style.display='none'" style="${fit === 'contain' ? getImgEstiloBannerContido() : getImgEstiloBanner(150)}">`;
+          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" onerror="this.style.display='none'" style="${fitSite}">`;
         } else if (temImg && posImg === 'left') {
-          midiaHtml = `<img src="${escapeHtml(normalizarUrlImagem(l.imageUrl, ''))}" alt="" loading="lazy" onerror="this.style.display='none'" style="${getImgEstiloThumb(l)}">`;
+          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" onerror="this.style.display='none'" style="${getImgEstiloThumb(l)}">`;
         } else {
           midiaHtml = `<div${attrLive('liveIcon', liveIconId)} style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
         }
@@ -2423,7 +2462,7 @@
           : '';
 
         linksHtml += `
-      <a${attrLive('liveBtn', liveBtnId)} href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      <a${attrLive('liveBtn', liveBtnId)} href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor, l)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         ${conteudo}
       </a>`;
       });
@@ -2439,9 +2478,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { ${estiloFundoParaCss(gerarEstiloFundo(cfg))} color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; min-height: 100vh; padding: 30px 16px; overflow-x: hidden; }
-    .card { width: 100%; max-width: 520px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .avatar { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid ${cfg.primaryColor}; box-shadow: 0 0 25px rgba(145, 70, 255, 0.4); margin-bottom: 16px; }
+    body { ${estiloFundoParaCss(gerarEstiloFundo(cfg))} color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; min-height: 100vh; padding: 30px 16px; overflow-x: hidden; position: relative; --bg-speed: ${sanearVelocidade(cfg.bgSpeed)}; }
+    .card { width: 100%; max-width: 520px; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; }
+    .avatar { width: clamp(110px, 9vw, 150px); height: clamp(110px, 9vw, 150px); border-radius: 50%; object-fit: cover; border: 3px solid ${cfg.primaryColor}; box-shadow: 0 0 25px rgba(145, 70, 255, 0.4); margin-bottom: 16px; }
+    @media (min-width: 768px) {
+      body { padding: 60px 32px; }
+      .card { max-width: 768px; }
+      .card > div:last-of-type { gap: 16px !important; }
+    }
     @keyframes liveGlow { 0%, 100% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.6); } 50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.95); } }
     .live-pulse { animation: liveGlow 2s infinite ease-in-out; }
     @keyframes itemGlow {
@@ -2449,8 +2493,6 @@
       50% { box-shadow: 0 0 28px rgba(var(--glow-rgb, 145, 70, 255), 0.8), inset 0 0 15px rgba(var(--glow-rgb, 145, 70, 255), 0.4); }
     }
     .glow-item { animation: itemGlow 2.5s infinite ease-in-out; }
-    body { position: relative; overflow-x: hidden; --bg-speed: ${sanearVelocidade(cfg.bgSpeed)}; }
-    .card { position: relative; z-index: 1; }
     [data-bg-layer] { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
     [data-bg-layer]:empty { display: none; }${cssAnimacaoFundo}
   </style>
@@ -2468,9 +2510,9 @@
     <img src="${normalizarUrlImagem(cfg.avatarUrl, 'Bio and pannel/Fotos/foto-5.png')}" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/110x110/18181b/9146FF?text=OM'" class="avatar">
     <h1 style="font-size: 22px; font-weight: 800;">${escapeHtml(cfg.displayName)}</h1>
     <p style="font-size: 14px; font-weight: 600; color: ${cfg.primaryColor}; margin-top: 4px;">${escapeHtml(cfg.username)}</p>
-    <p style="font-size: 13px; color: ${escapeHtml(cfg.bioColor || '#a1a1aa')}; max-width: 420px; margin: 12px 0 20px 0; line-height: 1.5; white-space: pre-line;">${escapeHtml(cfg.bio)}</p>
+    <p style="font-size: 14px; color: ${escapeHtml(cfg.bioColor || '#a1a1aa')}; max-width: 560px; margin: 12px 0 20px 0; line-height: 1.6; white-space: pre-line;">${escapeHtml(cfg.bio)}</p>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 24px;">${socialsHtml}</div>
+    <div style="display: flex; gap: 12px; margin-bottom: 28px;">${socialsHtml}</div>
     <div style="width: 100%; display: flex; flex-direction: column; gap: 12px;">${linksHtml}</div>
     ${cfg.showFooter !== false ? `<footer style="margin-top: 40px; font-size: 11px; color: ${escapeHtml(cfg.footerColor || '#52525b')};">${escapeHtml(getFooterText(cfg))}</footer>` : ''}
   </main>
