@@ -555,12 +555,16 @@
                 </h3>
                 <p class="text-xs text-zinc-400">Adicione botões, canais, lojas, campanhas, banners e destaque com animações.</p>
               </div>
-              <button onclick="adicionarNovoLink()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md shadow-emerald-700/30">
-                <i class="fa-solid fa-plus"></i> Novo Item
-              </button>
-              <button onclick="adicionarNovoItemTexto()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition flex items-center gap-1.5 border border-zinc-700">
-                <i class="fa-solid fa-align-left"></i> Novo Texto
-              </button>
+              <div class="flex items-center gap-2">
+                <select id="novoItemType" class="px-2 py-2 rounded-xl text-xs bg-zinc-800 border border-zinc-700 text-zinc-200 focus:outline-none focus:border-purple-500" title="Tipo do novo item">
+                  <option value="link">Link / Botão</option>
+                  <option value="texto">Texto</option>
+                  <option value="schedule">Agenda de Lives</option>
+                </select>
+                <button onclick="adicionarNovoLink(document.getElementById('novoItemType').value)" class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md shadow-emerald-700/30">
+                  <i class="fa-solid fa-plus"></i> Novo Item
+                </button>
+              </div>
             </div>
             <div id="adminLinksList" class="space-y-3.5"></div>
           </div>
@@ -687,6 +691,128 @@
     let appConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     let twitchLiveState = { isLive: false, uptime: "", lastChecked: null };
     let iconPickerTarget = null; // { tipo: 'link' | 'social', id }
+
+    // ============================================================================
+    // Registry de tipos de itens (arquitetura aberta e extensível).
+    // Para plugar um bloco novo no futuro: registre a chave em ITEM_TYPES,
+    // em ITEM_ADMIN_RENDERERS e em ITEM_PUBLIC_RENDERERS. Nada mais muda.
+    // ============================================================================
+    const SCHEDULE_DIAS_PADRAO = () => ([
+      { day: 0, label: "DOM", active: false, lives: [] },
+      { day: 1, label: "SEG", active: true,  lives: [{ time: "19:00", info: "Gameplay" }] },
+      { day: 2, label: "TER", active: false, lives: [] },
+      { day: 3, label: "QUA", active: true,  lives: [{ time: "19:00", info: "Comunidade" }] },
+      { day: 4, label: "QUI", active: false, lives: [] },
+      { day: 5, label: "SEX", active: true,  lives: [{ time: "20:00", info: "Sextou com Chat" }] },
+      { day: 6, label: "SÁB", active: false, lives: [] }
+    ]);
+
+    const ITEM_TYPES = {
+      link: {
+        label: "Link / Botão / Banner",
+        defaultData: (id) => ({
+          id: id || ("link_" + Date.now()),
+          type: "link",
+          title: "Novo Link", url: "https://", icon: "fa-solid fa-link",
+          subtitle: "", badge: "", highlight: false, active: true, glowColor: "",
+          imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover",
+          useFavicon: false,
+          content: "", textColor: "", textSize: "md", textAlign: "left",
+          syncLiveStatus: false, livePlatform: "auto"
+        })
+      },
+      texto: {
+        label: "Texto / Markdown",
+        defaultData: (id) => ({
+          id: id || ("txt_" + Date.now()),
+          type: "texto",
+          title: "Novo Texto", url: "", icon: "fa-solid fa-align-left",
+          subtitle: "", badge: "", highlight: false, active: true, glowColor: "",
+          imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover",
+          useFavicon: false,
+          content: "", textColor: "", textSize: "md", textAlign: "left",
+          syncLiveStatus: false, livePlatform: "auto"
+        })
+      },
+      schedule: {
+        label: "Agenda de Lives & Countdown",
+        defaultData: (id) => ({
+          id: id || ("sched_" + Date.now()),
+          type: "schedule",
+          title: "Cronograma de Lives",
+          icon: "fa-solid fa-calendar-days",
+          highlight: false, active: true, glowColor: "",
+          showCountdown: true,
+          scheduleDays: SCHEDULE_DIAS_PADRAO()
+        })
+      }
+    };
+
+    // ============================================================================
+    // Agenda de Lives: cálculo da próxima transmissão e contagem regressiva.
+    // ============================================================================
+
+    // Aceita "HH:MM", "HH:MM:SS" ou texto livre ("19h", "às 20:00"). Retorna
+    // minutos desde meia-noite, ou null quando não há horário utilizável.
+    function extrairMinutosDoHorario(time) {
+      const t = String(time || '').trim();
+      if (!t) return null;
+      const m = t.match(/(\d{1,2})\s*[:hH]\s*(\d{2})?/);
+      if (!m) return null;
+      const h = parseInt(m[1], 10);
+      const min = m[2] ? parseInt(m[2], 10) : 0;
+      if (h > 23 || min > 59) return null;
+      return h * 60 + min;
+    }
+
+    // Encontra a próxima live a partir de `agora`. Percorre 8 dias (não 7) para
+    // o caso de a live de hoje já ter passado — inclusive quando só existe um
+    // dia ativo na semana: o alvo cai no mesmo dia da semana seguinte (+7).
+    // Cada dia pode ter múltiplas lives (lives[]); a próxima é a primeira que
+    // ainda não começou. Se todas de hoje já passaram, avança para o próximo dia.
+    function calcularProximaLive(scheduleDays, agora) {
+      const dias = Array.isArray(scheduleDays) ? scheduleDays : [];
+      if (!dias.length) return null;
+      const base = agora ? new Date(agora) : new Date();
+      const diaAgora = base.getDay();
+      const agoraMin = base.getHours() * 60 + base.getMinutes() + base.getSeconds() / 60;
+
+      for (let offset = 0; offset < 8; offset++) {
+        const diaIdx = (diaAgora + offset) % 7;
+        const dia = dias.find(d => Number(d.day) === diaIdx) || dias[diaIdx];
+        if (!dia || !dia.active) continue;
+        const lives = Array.isArray(dia.lives) ? dia.lives : [];
+        // Ordena as lives do dia por horário para pegar a próxima não iniciada.
+        const livesOrdenadas = lives
+          .map(l => ({ live: l, min: extrairMinutosDoHorario(l.time) }))
+          .filter(x => x.min !== null)
+          .sort((a, b) => a.min - b.min);
+        const proxima = livesOrdenadas.find(x => offset > 0 || x.min > agoraMin);
+        if (!proxima) continue;
+        const alvo = new Date(base);
+        alvo.setDate(base.getDate() + offset);
+        alvo.setHours(Math.floor(proxima.min / 60), proxima.min % 60, 0, 0);
+        return { alvo, dia, live: proxima.live, offset };
+      }
+      return null;
+    }
+
+    // Milissegundos -> {d, h, m, s} já zerados, para os 4 blocos do countdown.
+    function decomporCountdown(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      return {
+        d: Math.floor(total / 86400),
+        h: Math.floor((total % 86400) / 3600),
+        m: Math.floor((total % 3600) / 60),
+        s: total % 60
+      };
+    }
+
+    function formatarCountdownBlocos(ms) {
+      const p = (n) => String(n).padStart(2, '0');
+      const c = decomporCountdown(ms);
+      return { d: p(c.d), h: p(c.h), m: p(c.m), s: p(c.s) };
+    }
 
     // Estado de live POR ITEM: { [itemId]: { isLive, uptime, platform, lastChecked } }.
     // O `twitchLiveState` acima continua existindo para o indicador da Seção 0, que
@@ -1497,16 +1623,13 @@
       return `w-full ${tam} ${alin} text-zinc-300 leading-relaxed break-words`;
     }
 
-    function renderizarLinksDOM() {
-      const g = (id) => document.getElementById(id);
-      const pubContainer = g('pubLinksContainer');
-      const prevContainer = g('prevLinksContainer');
-
-      if (pubContainer) pubContainer.innerHTML = '';
-      if (prevContainer) prevContainer.innerHTML = '';
-
-      (appConfig.links || []).filter(l => l.active).forEach(item => {
-        // Estado de live específico deste item (vários canais podem estar no ar).
+    // ============================================================================
+    // Renderers PÚBLICOS. Cada tipo devolve o HTML do componente pronto, usado no
+    // canvas público, no mockup lateral e no exportador estático. O loop principal
+    // (renderizarLinksDOM / gerarCodigoHTMLPronto) só invoca o renderer do tipo.
+    // ============================================================================
+    const ITEM_PUBLIC_RENDERERS = {
+      link(item, isMockup) {
         const st = appConfig.autoDetectLive ? liveStates[item.id] : null;
         const linkIsLive = !!(st && st.isLive);
         const uptimePtBr = formatarUptimePtBr(st && st.uptime);
@@ -1519,132 +1642,173 @@
         }
 
         let subtitleText = item.subtitle || '';
-        if (linkIsLive && uptimePtBr) {
-          subtitleText = `🔴 Ao vivo agora há ${uptimePtBr}!`;
-        }
+        if (linkIsLive && uptimePtBr) subtitleText = `🔴 Ao vivo agora há ${uptimePtBr}!`;
 
         const temImagem = !!(item.imageUrl && item.imageUrl.trim());
         const posicaoImg = getItemImagePosition(item);
         const imgSrc = escapeHtml(resolverImagemDoItem(item));
+        const imgOriginal = escapeHtml(normalizarUrlImagem(item.imageUrl, ''));
+        const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
 
-        const iconeBoxClasses = `w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400 group-hover:text-purple-300 group-hover:bg-purple-600/30')} transition duration-200`;
-        const iconeBoxMock = `w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-purple-400')}`;
+        const midia = (tam) => {
+          if (!(temImagem && (posicaoImg === 'left' || posicaoImg === 'top' || posicaoImg === 'bottom'))) return null;
+          return `<img src="${imgSrc}" alt="" loading="lazy" ${fallback} class="${tam}">`;
+        };
 
-        let midiaPublica = '';
-        if (temImagem && posicaoImg === 'left') {
-          midiaPublica = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesThumb(item, false)}">`;
-        } else if (temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom')) {
-          midiaPublica = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesBanner(item, false)}">`;
-        } else {
-          midiaPublica = `<div class="${iconeBoxClasses}">${renderizarIcone(item.icon)}</div>`;
-        }
+        const blocoTexto = (isM) => `
+          <div class="flex items-center justify-between ${isM ? 'gap-2 min-w-0 p-2.5' : 'gap-3.5 min-w-0 p-4'}">
+            <div class="${isM ? 'min-w-0 truncate' : 'min-w-0'}">
+              <div class="flex items-center ${isM ? 'gap-1.5 truncate' : 'gap-2'}">
+                <span class="font-bold ${isM ? 'text-xs text-zinc-100 truncate' : 'text-sm text-zinc-100 group-hover:text-white truncate'}">${escapeHtml(item.title)}</span>
+                ${badgeHtml}
+              </div>
+              ${subtitleText ? `<p class="${isM ? 'text-[10px]' : 'text-xs'} ${linkIsLive ? 'text-red-200 font-medium' : 'text-zinc-400'} truncate mt-0.5">${escapeHtml(subtitleText)}</p>` : ''}
+            </div>
+            <div class="flex-shrink-0 ${linkIsLive ? 'text-red-300' : 'text-zinc-500'} group-hover:text-zinc-200 transition duration-200 pl-2">
+              <i class="fa-solid fa-chevron-right ${isM ? 'text-[10px]' : 'text-xs'}"></i>
+            </div>
+          </div>`;
 
-        let midiaMock = '';
-        if (temImagem && posicaoImg === 'left') {
-          midiaMock = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesThumb(item, true)}">`;
-        } else if (temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom')) {
-          midiaMock = `<img src="${imgSrc}" alt="" loading="lazy" data-original-src="${escapeHtml(normalizarUrlImagem(item.imageUrl, ''))}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}" class="${getImgClassesBanner(item, true)}">`;
-        } else {
-          midiaMock = `<div class="${iconeBoxMock}">${renderizarIcone(item.icon)}</div>`;
-        }
+        const midiaHtml = temImagem
+          ? `<img src="${imgSrc}" alt="" loading="lazy" ${fallback} class="${posicaoImg === 'left' ? (isMockup ? getImgClassesThumb(item, true) : getImgClassesThumb(item, false)) : (isMockup ? getImgClassesBanner(item, true) : getImgClassesBanner(item, false))}">`
+          : `<div class="${isMockup ? `w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-purple-400')}` : `w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400 group-hover:text-purple-300 group-hover:bg-purple-600/30')} transition duration-200`}">${renderizarIcone(item.icon)}</div>`;
 
-        if (pubContainer) {
-          if (item.type === 'texto') {
-            const divTxt = document.createElement('div');
-            divTxt.className = getClasseBlocoTexto(item.textSize, item.textAlign);
-            divTxt.innerHTML = markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' });
-            pubContainer.appendChild(divTxt);
+        const layoutCol = temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom');
+        const conteudo = layoutCol
+          ? `<div class="flex flex-col gap-0 w-full">${posicaoImg === 'bottom' ? blocoTexto(isMockup) + midiaHtml : midiaHtml + blocoTexto(isMockup)}</div>`
+          : `<div class="flex items-center ${isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2'}">${midiaHtml}${blocoTexto(isMockup)}</div>`;
+
+        return { conteudo, layoutCol, linkIsLive, item };
+      },
+
+      texto(item) {
+        return {
+          html: `<div class="${getClasseBlocoTexto(item.textSize, item.textAlign)}">${markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' })}</div>`
+        };
+      },
+
+      schedule(item, isMockup) {
+        const cor = getItemGlowColor(item);
+        const rgb = hexToRgbTriplet(cor);
+        const primaria = appConfig.primaryColor || '#9146FF';
+        const agora = new Date();
+        const proxima = calcularProximaLive(item.scheduleDays, agora);
+        const aoVivo = !!(appConfig.autoDetectLive && twitchLiveState.isLive);
+        const dias = Array.isArray(item.scheduleDays) ? item.scheduleDays : [];
+        const diaAtual = agora.getDay();
+
+        // --- Contador dinâmico ---
+        let countdownHtml = '';
+        if (item.showCountdown !== false) {
+          if (aoVivo) {
+            countdownHtml = `
+              <div class="flex items-center justify-center gap-2 py-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                <span class="text-sm font-black tracking-wide text-red-300 uppercase">🔴 AO VIVO AGORA!</span>
+              </div>`;
+          } else if (proxima) {
+            const c = formatarCountdownBlocos(proxima.alvo - agora);
+            const bloco = (v, rot) => `
+              <div class="flex flex-col items-center ${isMockup ? 'px-1.5 py-1' : 'px-2.5 py-1.5'} rounded-lg bg-black/40 border border-zinc-700/60">
+                <span class="${isMockup ? 'text-xs' : 'text-lg'} font-black font-mono text-white leading-none" data-countdown="${rot}">${v}</span>
+                <span class="${isMockup ? 'text-[7px]' : 'text-[9px]'} font-bold uppercase tracking-wider text-zinc-400 mt-0.5">${rot}</span>
+              </div>`;
+            countdownHtml = `
+              <div class="flex flex-col items-center gap-1.5 py-2">
+                <span data-countdown-alvo class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Próxima live: ${escapeHtml(proxima.dia.label)}${proxima.dia.info ? ' · ' + escapeHtml(proxima.dia.info) : ''}</span>
+                <div class="flex items-center gap-1.5">
+                  ${bloco(c.d, 'Dias')}${bloco(c.h, 'Horas')}${bloco(c.m, 'Min')}${bloco(c.s, 'Seg')}
+                </div>
+              </div>`;
           } else {
+            countdownHtml = `<div class="py-2 text-center text-[10px] text-zinc-500">Nenhum dia ativo na agenda.</div>`;
+          }
+        }
+
+        // --- Linha semanal (7 dias) ---
+        const gradeHtml = dias.map(dia => {
+          const ehHoje = Number(dia.day) === diaAtual;
+          const borda = ehHoje ? `2px solid ${primaria}` : '1px solid #27272a';
+          const fundo = ehHoje ? `rgba(${hexToRgbTriplet(primaria)}, 0.18)` : 'rgba(24,24,27,.72)';
+          const textoCor = ehHoje ? '#fff' : (dia.active ? '#d4d4d8' : '#71717a');
+          const lives = Array.isArray(dia.lives) ? dia.lives : [];
+          const livesHtml = lives.length
+            ? lives.map(l => `
+              <div class="flex flex-col items-center ${isMockup ? 'gap-0' : 'gap-0.5'}">
+                <span class="${isMockup ? 'text-[7px]' : 'text-[9px]'} font-mono ${dia.active ? 'text-zinc-200' : 'text-zinc-600'}">${escapeHtml(l.time || '—')}</span>
+                ${l.info ? `<span class="${isMockup ? 'text-[6px]' : 'text-[8px]'} text-zinc-500 text-center leading-tight">${escapeHtml(l.info)}</span>` : ''}
+              </div>`).join('')
+            : `<span class="${isMockup ? 'text-[7px]' : 'text-[9px]'} font-mono text-zinc-600">—</span>`;
+          return `
+            <div class="flex flex-col items-center ${isMockup ? 'px-1 py-1 gap-0.5' : 'px-1.5 py-1.5 gap-1'} rounded-lg" style="background:${fundo};border:${borda};">
+              <span class="${isMockup ? 'text-[8px]' : 'text-[10px]'} font-black" style="color:${ehHoje ? primaria : textoCor};">${escapeHtml(dia.label)}</span>
+              ${livesHtml}
+            </div>`;
+        }).join('');
+
+        const estiloCard = item.highlight
+          ? `border: 2px solid ${cor}; box-shadow: 0 0 20px rgba(${rgb}, 0.55);`
+          : `border: 1px solid #27272a; box-shadow: 0 10px 15px -3px rgba(0,0,0,.4);`;
+        const vidro = (appConfig.buttonStyle === 'glass' && appConfig.bgType && appConfig.bgType !== 'solid') ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
+
+        return {
+          html: `
+          <div data-countdown-wrap="${item.id}" class="w-full ${isMockup ? 'p-2.5' : 'p-4'} ${appConfig.buttonRadius || 'rounded-2xl'} flex flex-col gap-2 ${item.highlight ? 'animate-pulse-glow' : ''}" style="background: rgba(24,24,27,.72); ${estiloCard} ${vidro} --glow-rgb: ${rgb};">
+            <div class="flex items-center gap-2">
+              <span class="${isMockup ? 'text-xs' : 'text-sm'}" style="color:${cor};">${renderizarIcone(item.icon)}</span>
+              <span class="${isMockup ? 'text-xs' : 'text-sm'} font-bold text-white truncate">${escapeHtml(item.title)}</span>
+            </div>
+            ${countdownHtml}
+            <div class="grid grid-cols-7 gap-1">${gradeHtml}</div>
+          </div>`
+        };
+      }
+    };
+
+    // Loop principal de renderização pública. Não conhece nenhum tipo: apenas
+    // delega para o renderer registrado (fallback = link).
+    function renderizarLinksDOM() {
+      const g = (id) => document.getElementById(id);
+      const pubContainer = g('pubLinksContainer');
+      const prevContainer = g('prevLinksContainer');
+
+      if (pubContainer) pubContainer.innerHTML = '';
+      if (prevContainer) prevContainer.innerHTML = '';
+
+      (appConfig.links || []).filter(l => l.active).forEach(item => {
+        const renderer = ITEM_PUBLIC_RENDERERS[item.type] || ITEM_PUBLIC_RENDERERS.link;
+
+        if (item.type === 'link') {
+          // Link é um <a> com layout próprio (imagem + texto + chevron).
+          const r = renderer(item, false);
           const a = document.createElement('a');
           a.href = item.url;
           a.target = "_blank";
           a.rel = "noopener noreferrer";
-          a.className = getEstiloBotaoClasses(item.highlight, linkIsLive, false, item);
-          const layoutCol = temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom');
-          if (layoutCol) a.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
+          a.className = getEstiloBotaoClasses(item.highlight, r.linkIsLive, false, item);
+          if (r.layoutCol) a.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
           aplicarGlowNoElemento(a, item);
-          // Em 'bottom' a imagem é emitida DEPOIS dos textos; em 'top', antes.
-          const blocoTexto = `<div class="flex items-center justify-between gap-3.5 min-w-0 p-4">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-sm text-zinc-100 group-hover:text-white truncate">${escapeHtml(item.title)}</span>
-                    ${badgeHtml}
-                  </div>
-                  ${subtitleText ? `<p class="text-xs ${linkIsLive ? 'text-red-200 font-medium' : 'text-zinc-400'} truncate mt-0.5">${escapeHtml(subtitleText)}</p>` : ''}
-                </div>
-                <div class="flex-shrink-0 ${linkIsLive ? 'text-red-300' : 'text-zinc-500'} group-hover:text-zinc-200 transition duration-200 pl-2">
-                  <i class="fa-solid fa-chevron-right text-xs"></i>
-                </div>
-              </div>`;
-          a.innerHTML = `
-            ${layoutCol ? `<div class="flex flex-col gap-0 w-full">
-              ${posicaoImg === 'bottom' ? blocoTexto + midiaPublica : midiaPublica + blocoTexto}
-            </div>` : `
-            <div class="flex items-center gap-3.5 min-w-0 pr-2">
-              ${midiaPublica}
-              <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-sm text-zinc-100 group-hover:text-white truncate">${escapeHtml(item.title)}</span>
-                  ${badgeHtml}
-                </div>
-                ${subtitleText ? `<p class="text-xs ${linkIsLive ? 'text-red-200 font-medium' : 'text-zinc-400'} truncate mt-0.5">${escapeHtml(subtitleText)}</p>` : ''}
-              </div>
-            </div>
-            <div class="flex-shrink-0 ${linkIsLive ? 'text-red-300' : 'text-zinc-500'} group-hover:text-zinc-200 group-hover:translate-x-0.5 transition duration-200 pl-2">
-              <i class="fa-solid fa-chevron-right text-xs"></i>
-            </div>`}
-          `;
-          pubContainer.appendChild(a);
-          }
-        }
+          a.innerHTML = r.conteudo;
+          if (pubContainer) pubContainer.appendChild(a);
 
-        if (item.type === 'texto') {
-          if (prevContainer) {
-            const divPrev = document.createElement('div');
-            divPrev.className = getClasseBlocoTexto(item.textSize, item.textAlign);
-            divPrev.innerHTML = markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' });
-            prevContainer.appendChild(divPrev);
-          }
-          return;
-        }
-
-        if (prevContainer) {
+          const rMock = renderer(item, true);
           const aPrev = document.createElement('a');
           aPrev.href = item.url;
           aPrev.target = "_blank";
-          aPrev.className = getEstiloBotaoClasses(item.highlight, linkIsLive, true, item);
-          const mockCol = temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom');
-          if (mockCol) aPrev.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
+          aPrev.className = getEstiloBotaoClasses(item.highlight, rMock.linkIsLive, true, item);
+          if (rMock.layoutCol) aPrev.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
           aplicarGlowNoElemento(aPrev, item);
-          const blocoTextoMock = `<div class="flex items-center justify-between gap-2 min-w-0 p-2.5">
-                <div class="min-w-0 truncate">
-                  <div class="flex items-center gap-1.5 truncate">
-                    <span class="font-bold text-xs text-zinc-100 truncate">${escapeHtml(item.title)}</span>
-                    ${badgeHtml}
-                  </div>
-                  ${subtitleText ? `<p class="text-[10px] ${linkIsLive ? 'text-red-200' : 'text-zinc-400'} truncate">${escapeHtml(subtitleText)}</p>` : ''}
-                </div>
-                <div class="flex-shrink-0 text-zinc-500 pl-1"><i class="fa-solid fa-chevron-right text-[10px]"></i></div>
-              </div>`;
-          aPrev.innerHTML = `
-            ${mockCol ? `<div class="flex flex-col gap-0 w-full">
-              ${posicaoImg === 'bottom' ? blocoTextoMock + midiaMock : midiaMock + blocoTextoMock}
-            </div>` : `
-            <div class="flex items-center gap-2.5 min-w-0 pr-1">
-              ${midiaMock}
-              <div class="min-w-0 truncate">
-                <div class="flex items-center gap-1.5 truncate">
-                  <span class="font-bold text-xs text-zinc-100 truncate">${escapeHtml(item.title)}</span>
-                  ${badgeHtml}
-                </div>
-                ${subtitleText ? `<p class="text-[10px] ${linkIsLive ? 'text-red-200' : 'text-zinc-400'} truncate">${escapeHtml(subtitleText)}</p>` : ''}
-              </div>
-            </div>
-            <i class="fa-solid fa-chevron-right text-[10px] text-zinc-500"></i>
-          `}`;
-          prevContainer.appendChild(aPrev);
+          aPrev.innerHTML = rMock.conteudo;
+          if (prevContainer) prevContainer.appendChild(aPrev);
+          return;
         }
+
+        // Demais tipos (texto, schedule) devolvem HTML pronto.
+        if (pubContainer) pubContainer.insertAdjacentHTML('beforeend', renderer(item, false).html || renderer(item, false));
+        if (prevContainer) prevContainer.insertAdjacentHTML('beforeend', renderer(item, true).html || renderer(item, true));
       });
+
+      agendarCountdowns();
     }
 
     function preencherFormularioAdmin() {
@@ -1685,6 +1849,107 @@
       renderizarListaSocialAdmin();
       renderizarListaLinksAdmin();
     }
+
+    // ============================================================================
+    // Renderers de ADMIN (Seção D). Cada tipo devolve o HTML do formulário de
+    // edição. O loop em renderizarListaLinksAdmin() só chama o renderer do tipo.
+    // ============================================================================
+    const ITEM_ADMIN_RENDERERS = {
+      link(item, index) {
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título do Botão</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino</label><input type="text" value="${escapeHtml(item.url)}" oninput="atualizarLinkCampo(${index}, 'url', this.value); atualizarVisibilidadeLiveItem(${index})" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Subtítulo (Opcional)</label><input type="text" value="${escapeHtml(item.subtitle || '')}" oninput="atualizarLinkCampo(${index}, 'subtitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Badge (Ex: NOVO)</label><input type="text" value="${escapeHtml(item.badge || '')}" oninput="atualizarLinkCampo(${index}, 'badge', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+          </div>
+          <div id="liveBoxWrap_${index}" class="mt-2 ${resolverPlataformaLive(item) ? '' : 'hidden'}">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" ${item.syncLiveStatus ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'syncLiveStatus', this.checked); atualizarVisibilidadeSelectPlataforma(${index})" class="w-3.5 h-3.5 accent-purple-600 cursor-pointer">
+              <span class="text-[11px] text-zinc-300">Sincronizar status de live automaticamente para este link</span>
+            </label>
+            <div id="livePlatWrap_${index}" class="mt-1.5 ml-5 ${item.syncLiveStatus ? '' : 'hidden'}">
+              <label class="block text-[10px] font-medium text-zinc-500 mb-0.5">Plataforma</label>
+              <select onchange="atualizarLinkCampo(${index}, 'livePlatform', this.value)" class="bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-purple-500">
+                <option value="auto" ${(!item.livePlatform || item.livePlatform === 'auto') ? 'selected' : ''}>Automático (pelo domínio da URL)</option>
+                <option value="twitch" ${item.livePlatform === 'twitch' ? 'selected' : ''}>Twitch</option>
+                <option value="kick" ${item.livePlatform === 'kick' ? 'selected' : ''}>Kick (indisponível)</option>
+                <option value="youtube" ${item.livePlatform === 'youtube' ? 'selected' : ''}>YouTube (indisponível)</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            <div class="sm:col-span-3 flex items-center gap-2"><label class="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" ${item.useFavicon ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'useFavicon', this.checked)" class="w-3.5 h-3.5 accent-purple-600"><span class="text-[11px] font-medium text-zinc-300">Usar favicon</span></label><span title="Ative para transformar URLs de sites, como twitch.tv ou github.com, no favicon do domínio. Desative para tentar carregar a URL original como imagem." class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-zinc-600 text-[10px] text-zinc-400 cursor-help">?</span></div>
+            <div class="sm:col-span-3"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem (opcional)</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="left" ${(item.imagePosition || 'left') === 'left' ? 'selected' : ''}>Miniatura à Esquerda</option><option value="top" ${item.imagePosition === 'top' ? 'selected' : ''}>Banner Acima</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Banner Abaixo</option></select></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Enquadramento da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageFit', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="cover" ${(!item.imageFit || item.imageFit === 'cover') ? 'selected' : ''}>Preencher / Cortar</option><option value="contain" ${item.imageFit === 'contain' ? 'selected' : ''}>Inteira / Sem Cortar</option></select></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="sm" ${item.imageSize === 'sm' ? 'selected' : ''}>Pequeno</option><option value="md" ${(!item.imageSize || item.imageSize === 'md') ? 'selected' : ''}>Médio</option><option value="lg" ${item.imageSize === 'lg' ? 'selected' : ''}>Destaque</option><option value="banner" ${item.imageSize === 'banner' ? 'selected' : ''}>Banner Grande</option></select></div>
+          </div>`;
+      },
+
+      texto(item, index) {
+        return `
+            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Conteúdo (Markdown)</label>
+              <textarea rows="10" oninput="atualizarLinkCampo(${index}, 'content', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-purple-500" style="resize:vertical;line-height:1.5;" spellcheck="false" placeholder="Esse é o meu Setup:&#10;&#10;>**PC**&#10;* **Placa Mãe:** [Gigabyte B760M](https://exemplo.com)">${escapeHtml(item.content || '')}</textarea>
+              <p class="text-[10px] text-zinc-500 mt-1 leading-relaxed"><strong>PC</strong> negrito · <em>*itálico*</em> · <s>~~riscado~~</s> · [link](url) · <code>&gt;PC</code> título com barra · <code>#</code>/<code>##</code> headings · <code>-</code> ou <code>*</code> lista · <code>1.</code> lista numerada · 2 espaços no fim = quebra de linha</p>
+            </div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Cor da Barra</label><div class="flex items-center gap-2">
+              <input type="color" value="${escapeHtml(item.textColor || appConfig.primaryColor || '#9146FF')}" oninput="atualizarLinkCampo(${index}, 'textColor', this.value)" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0">
+              <button onclick="atualizarLinkCampo(${index}, 'textColor', '')" class="px-2 py-1.5 text-[11px] bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-300 hover:border-purple-500 transition shrink-0">Usar cor principal</button>
+            </div></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho do Texto</label><select onchange="atualizarLinkCampo(${index}, 'textSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
+              <option value="sm" ${item.textSize === 'sm' ? 'selected' : ''}>Pequeno</option>
+              <option value="md" ${(!item.textSize || item.textSize === 'md') ? 'selected' : ''}>Médio</option>
+              <option value="lg" ${item.textSize === 'lg' ? 'selected' : ''}>Grande</option>
+            </select></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Alinhamento</label><select onchange="atualizarLinkCampo(${index}, 'textAlign', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
+              <option value="left" ${(!item.textAlign || item.textAlign === 'left') ? 'selected' : ''}>À esquerda</option>
+              <option value="center" ${item.textAlign === 'center' ? 'selected' : ''}>Centralizado</option>
+            </select></div>`;
+      },
+
+      schedule(item, index) {
+        const dias = Array.isArray(item.scheduleDays) ? item.scheduleDays : [];
+        const linhaDia = (dia) => {
+          const i = dias.indexOf(dia);
+          const lives = Array.isArray(dia.lives) ? dia.lives : [];
+          const linhaLive = (live, li) => `
+            <div class="flex items-center gap-1.5 pl-8">
+              <input type="text" value="${escapeHtml(live.time || '')}" oninput="atualizarLiveAgenda(${index}, ${i}, ${li}, 'time', this.value)" placeholder="19:00" class="w-20 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-[11px] text-white font-mono focus:outline-none focus:border-purple-500" title="Horário da live">
+              <input type="text" value="${escapeHtml(live.info || '')}" oninput="atualizarLiveAgenda(${index}, ${i}, ${li}, 'info', this.value)" placeholder="Tema (opcional)" class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-[11px] text-white focus:outline-none focus:border-purple-500" title="Observação / tema da live">
+              <button onclick="removerLiveAgenda(${index}, ${i}, ${li})" title="Remover live" class="p-1 text-zinc-500 hover:text-red-400 rounded hover:bg-red-950/30 transition shrink-0"><i class="fa-solid fa-xmark text-xs"></i></button>
+            </div>`;
+          return `
+            <div class="bg-zinc-900/70 border border-zinc-800 rounded-lg px-2 py-1.5 flex flex-col gap-1.5">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" ${dia.active ? 'checked' : ''} onchange="atualizarDiaAgenda(${index}, ${i}, 'active', this.checked)" class="w-3.5 h-3.5 accent-purple-600 cursor-pointer shrink-0" title="Ativar ${dia.label}">
+                <span class="text-[11px] font-bold text-zinc-200 w-7 shrink-0">${escapeHtml(dia.label)}</span>
+                <span class="text-[10px] text-zinc-500">${lives.length} live${lives.length !== 1 ? 's' : ''}</span>
+                <div class="flex-1"></div>
+                <button onclick="adicionarLiveAgenda(${index}, ${i})" title="Adicionar live" class="px-2 py-1 text-[10px] bg-zinc-800 hover:bg-purple-600 text-zinc-300 hover:text-white rounded transition shrink-0"><i class="fa-solid fa-plus mr-1"></i>Live</button>
+              </div>
+              ${lives.map(linhaLive).join('')}
+            </div>`;
+        };
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título do Bloco</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div class="flex items-end pb-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" ${item.showCountdown ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'showCountdown', this.checked)" class="w-3.5 h-3.5 accent-purple-600 cursor-pointer">
+                <span class="text-[11px] font-medium text-zinc-300">Mostrar contagem regressiva</span>
+              </label>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-[11px] font-medium text-zinc-400 mb-1.5">Grade Semanal</label>
+            <div class="flex flex-col gap-1.5">
+              ${dias.map(linhaDia).join('')}
+            </div>
+            <p class="text-[10px] text-zinc-500 mt-1.5">Ative os dias com live, defina horários e temas. O dia atual ganha destaque na página pública.</p>
+          </div>`;
+      }
+    };
 
     function renderizarListaSocialAdmin() {
       const container = document.getElementById('adminSocialsList');
@@ -1760,6 +2025,9 @@
       dispararAtualizacaoGeral();
     }
 
+    // Loop principal do admin: monta o card (header com controles comuns) e
+    // delega o formulário ao renderer do tipo. O select de tipo é alimentado
+    // direto de ITEM_TYPES, então um tipo novo aparece aqui automaticamente.
     function renderizarListaLinksAdmin() {
       const container = document.getElementById('adminLinksList');
       if (!container) return;
@@ -1771,21 +2039,23 @@
       appConfig.links.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = `p-4 rounded-2xl border transition-all duration-200 ${item.highlight ? 'bg-purple-950/20 border-purple-500/60' : 'bg-zinc-950 border-zinc-800'}`;
+        const opcoesTipo = Object.entries(ITEM_TYPES)
+          .map(([chave, def]) => `<option value="${chave}" ${item.type === chave ? 'selected' : ''}>${def.label}</option>`)
+          .join('');
         card.innerHTML = `
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-zinc-800/80 pb-2.5">
             <div class="flex items-center gap-2">
               <button onclick="abrirModalIcone('link', '${escapeHtml(item.id)}')" title="Trocar Ícone" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-purple-600 hover:text-white text-purple-400 flex items-center justify-center text-sm transition border border-zinc-700">
                 ${renderizarIcone(item.icon)}
               </button>
-              <span class="text-xs font-bold text-white tracking-wide truncate max-w-[200px]">${escapeHtml(item.title || 'Novo Link')}</span>
+              <span class="text-xs font-bold text-white tracking-wide truncate max-w-[200px]">${escapeHtml(item.title || 'Novo Item')}</span>
               ${item.highlight ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-mono uppercase">Destaque</span>` : ''}
             </div>
             <div class="flex items-center gap-1.5 self-end sm:self-auto">
               <button onclick="moverLink(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30 p-1.5 text-zinc-500"' : 'class="p-1.5 text-zinc-400 hover:text-white rounded hover:bg-zinc-800 transition"'}><i class="fa-solid fa-arrow-up text-xs"></i></button>
               <button onclick="moverLink(${index}, 1)" ${index === appConfig.links.length - 1 ? 'disabled class="opacity-30 p-1.5 text-zinc-500"' : 'class="p-1.5 text-zinc-400 hover:text-white rounded hover:bg-zinc-800 transition"'}><i class="fa-solid fa-arrow-down text-xs"></i></button>
-              <select onchange="alternarTipoLink(${index}, this.value)" title="Tipo de item: botão com link ou bloco de texto" class="ml-1 px-1.5 py-1 text-[11px] rounded bg-zinc-800 text-zinc-300 border border-zinc-700 hover:border-purple-500 transition">
-                <option value="link" ${(!item.type || item.type === 'link') ? 'selected' : ''}>Botão</option>
-                <option value="texto" ${item.type === 'texto' ? 'selected' : ''}>Texto</option>
+              <select onchange="alternarTipoLink(${index}, this.value)" title="Tipo de item" class="ml-1 px-1.5 py-1 text-[11px] rounded bg-zinc-800 text-zinc-300 border border-zinc-700 hover:border-purple-500 transition">
+                ${opcoesTipo}
               </select>
               <button onclick="alternarDestaqueLink(${index})" class="px-2 py-1 text-[11px] rounded font-medium ${item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'} transition ml-1"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Glow</button>
               <label title="Cor personalizada do Glow deste item" class="ml-1 flex items-center gap-1 px-1.5 py-1 rounded ${item.highlight ? 'bg-zinc-800' : 'bg-zinc-800/60 opacity-60'} transition cursor-pointer">
@@ -1795,62 +2065,105 @@
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            ${(item.type === 'texto') ? `
-            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Conteúdo (Markdown)</label>
-              <textarea rows="10" oninput="atualizarLinkCampo(${index}, 'content', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-purple-500" style="resize:vertical;line-height:1.5;" spellcheck="false" placeholder="Esse é o meu Setup:&#10;&#10;>**PC**&#10;* **Placa Mãe:** [Gigabyte B760M](https://exemplo.com)">${escapeHtml(item.content || '')}</textarea>
-              <p class="text-[10px] text-zinc-500 mt-1 leading-relaxed"><strong>PC</strong> negrito · <em>*itálico*</em> · <s>~~riscado~~</s> · [link](url) · <code>&gt;PC</code> título com barra · <code>#</code>/<code>##</code> headings · <code>-</code> ou <code>*</code> lista · <code>1.</code> lista numerada · 2 espaços no fim = quebra de linha</p>
-            </div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Cor da Barra</label><div class="flex items-center gap-2">
-              <input type="color" value="${escapeHtml(item.textColor || appConfig.primaryColor || '#9146FF')}" oninput="atualizarLinkCampo(${index}, 'textColor', this.value)" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0">
-              <button onclick="atualizarLinkCampo(${index}, 'textColor', '')" class="px-2 py-1.5 text-[11px] bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-300 hover:border-purple-500 transition shrink-0">Usar cor principal</button>
-            </div></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho do Texto</label><select onchange="atualizarLinkCampo(${index}, 'textSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
-              <option value="sm" ${item.textSize === 'sm' ? 'selected' : ''}>Pequeno</option>
-              <option value="md" ${(!item.textSize || item.textSize === 'md') ? 'selected' : ''}>Médio</option>
-              <option value="lg" ${item.textSize === 'lg' ? 'selected' : ''}>Grande</option>
-            </select></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Alinhamento</label><select onchange="atualizarLinkCampo(${index}, 'textAlign', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
-              <option value="left" ${(!item.textAlign || item.textAlign === 'left') ? 'selected' : ''}>À esquerda</option>
-              <option value="center" ${item.textAlign === 'center' ? 'selected' : ''}>Centralizado</option>
-            </select></div>
-            ` : `
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título do Botão</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino</label><input type="text" value="${escapeHtml(item.url)}" oninput="atualizarLinkCampo(${index}, 'url', this.value); atualizarVisibilidadeLiveItem(${index})" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Subtítulo (Opcional)</label><input type="text" value="${escapeHtml(item.subtitle || '')}" oninput="atualizarLinkCampo(${index}, 'subtitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Badge (Ex: NOVO)</label><input type="text" value="${escapeHtml(item.badge || '')}" oninput="atualizarLinkCampo(${index}, 'badge', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-          </div>
-          <div id="liveBoxWrap_${index}" class="mt-2 ${resolverPlataformaLive(item) ? '' : 'hidden'}">
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <input type="checkbox" ${item.syncLiveStatus ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'syncLiveStatus', this.checked); atualizarVisibilidadeSelectPlataforma(${index})" class="w-3.5 h-3.5 accent-purple-600 cursor-pointer">
-              <span class="text-[11px] text-zinc-300">Sincronizar status de live automaticamente para este link</span>
-            </label>
-            <div id="livePlatWrap_${index}" class="mt-1.5 ml-5 ${item.syncLiveStatus ? '' : 'hidden'}">
-              <label class="block text-[10px] font-medium text-zinc-500 mb-0.5">Plataforma</label>
-              <select onchange="atualizarLinkCampo(${index}, 'livePlatform', this.value)" class="bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-purple-500">
-                <option value="auto" ${(!item.livePlatform || item.livePlatform === 'auto') ? 'selected' : ''}>Automático (pelo domínio da URL)</option>
-                <option value="twitch" ${item.livePlatform === 'twitch' ? 'selected' : ''}>Twitch</option>
-                <option value="kick" ${item.livePlatform === 'kick' ? 'selected' : ''}>Kick (indisponível)</option>
-                <option value="youtube" ${item.livePlatform === 'youtube' ? 'selected' : ''}>YouTube (indisponível)</option>
-              </select>
-            </div>
-          </div>`}
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-            <div class="sm:col-span-3 flex items-center gap-2"><label class="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" ${item.useFavicon ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'useFavicon', this.checked)" class="w-3.5 h-3.5 accent-purple-600"><span class="text-[11px] font-medium text-zinc-300">Usar favicon</span></label><span title="Ative para transformar URLs de sites, como twitch.tv ou github.com, no favicon do domínio. Desative para tentar carregar a URL original como imagem." class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-zinc-600 text-[10px] text-zinc-400 cursor-help">?</span></div>
-            <div class="sm:col-span-3"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem (opcional)</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="left" ${(item.imagePosition || 'left') === 'left' ? 'selected' : ''}>Miniatura à Esquerda</option><option value="top" ${item.imagePosition === 'top' ? 'selected' : ''}>Banner Acima</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Banner Abaixo</option></select></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Enquadramento da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageFit', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="cover" ${(!item.imageFit || item.imageFit === 'cover') ? 'selected' : ''}>Preencher / Cortar</option><option value="contain" ${item.imageFit === 'contain' ? 'selected' : ''}>Inteira / Sem Cortar</option></select></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="sm" ${item.imageSize === 'sm' ? 'selected' : ''}>Pequeno</option><option value="md" ${(!item.imageSize || item.imageSize === 'md') ? 'selected' : ''}>Médio</option><option value="lg" ${item.imageSize === 'lg' ? 'selected' : ''}>Destaque</option><option value="banner" ${item.imageSize === 'banner' ? 'selected' : ''}>Banner Grande</option></select></div>
+            ${(ITEM_ADMIN_RENDERERS[item.type] || ITEM_ADMIN_RENDERERS.link)(item, index)}
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function adicionarNovoLink() {
-      appConfig.links.push({ id: "link_" + Date.now(), title: "Novo Item Customizado", subtitle: "Breve descrição do destino", url: "https://", icon: "fa-solid fa-link", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
+    // Atualiza UM campo de UM dia da agenda sem reconstruir a lista do admin
+    // (preserva o foco de digitação). Salva e re-renderiza a página pública.
+    function atualizarDiaAgenda(index, diaIndex, campo, valor) {
+      const item = appConfig.links[index];
+      if (!item || !Array.isArray(item.scheduleDays)) return;
+      const dia = item.scheduleDays[diaIndex];
+      if (!dia) return;
+      dia[campo] = valor;
+      salvarConfiguracao();
+      dispararAtualizacaoGeral();
+    }
+
+    function adicionarLiveAgenda(index, diaIndex) {
+      const item = appConfig.links[index];
+      if (!item || !Array.isArray(item.scheduleDays)) return;
+      const dia = item.scheduleDays[diaIndex];
+      if (!dia) return;
+      if (!Array.isArray(dia.lives)) dia.lives = [];
+      dia.lives.push({ time: "19:00", info: "" });
       salvarConfiguracao();
       renderizarListaLinksAdmin();
       dispararAtualizacaoGeral();
+    }
+
+    function removerLiveAgenda(index, diaIndex, liveIndex) {
+      const item = appConfig.links[index];
+      if (!item || !Array.isArray(item.scheduleDays)) return;
+      const dia = item.scheduleDays[diaIndex];
+      if (!dia || !Array.isArray(dia.lives)) return;
+      dia.lives.splice(liveIndex, 1);
+      salvarConfiguracao();
+      renderizarListaLinksAdmin();
+      dispararAtualizacaoGeral();
+    }
+
+    function atualizarLiveAgenda(index, diaIndex, liveIndex, campo, valor) {
+      const item = appConfig.links[index];
+      if (!item || !Array.isArray(item.scheduleDays)) return;
+      const dia = item.scheduleDays[diaIndex];
+      if (!dia || !Array.isArray(dia.lives)) return;
+      const live = dia.lives[liveIndex];
+      if (!live) return;
+      live[campo] = valor;
+      salvarConfiguracao();
+      dispararAtualizacaoGeral();
+    }
+
+    // Atualiza os blocos de countdown de todos os itens schedule visíveis.
+    // Um único setInterval para todos, sem reconstruir o DOM.
+    let countdownIntervalId = null;
+    function agendarCountdowns() {
+      if (countdownIntervalId) clearInterval(countdownIntervalId);
+      const temSchedule = (appConfig.links || []).some(l => l.active && l.type === 'schedule' && l.showCountdown !== false);
+      if (!temSchedule) return;
+      countdownIntervalId = setInterval(() => {
+        const aoVivo = !!(appConfig.autoDetectLive && twitchLiveState.isLive);
+        (appConfig.links || []).filter(l => l.active && l.type === 'schedule').forEach(item => {
+          const proxima = calcularProximaLive(item.scheduleDays, new Date());
+          const wrap = document.querySelector(`[data-countdown-wrap="${item.id}"]`);
+          if (!wrap) return;
+          const blocoD = wrap.querySelector('[data-countdown="d"]');
+          const blocoH = wrap.querySelector('[data-countdown="h"]');
+          const blocoM = wrap.querySelector('[data-countdown="m"]');
+          const blocoS = wrap.querySelector('[data-countdown="s"]');
+          const alvoWrap = wrap.querySelector('[data-countdown-alvo]');
+          if (aoVivo) {
+            if (alvoWrap) {
+              alvoWrap.innerHTML = `<div class="flex items-center justify-center gap-2 py-2"><span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span><span class="text-sm font-black tracking-wide text-red-300 uppercase">🔴 AO VIVO AGORA!</span></div>`;
+            }
+            [blocoD, blocoH, blocoM, blocoS].forEach(b => { if (b) b.closest('div').style.display = 'none'; });
+          } else if (proxima) {
+            if (alvoWrap) {
+              alvoWrap.innerHTML = `<span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Próxima live: ${escapeHtml(proxima.dia.label)}${proxima.dia.info ? ' · ' + escapeHtml(proxima.dia.info) : ''}</span>`;
+            }
+            const c = formatarCountdownBlocos(proxima.alvo - new Date());
+            if (blocoD) { blocoD.textContent = c.d; blocoD.closest('div').style.display = ''; }
+            if (blocoH) { blocoH.textContent = c.h; blocoH.closest('div').style.display = ''; }
+            if (blocoM) { blocoM.textContent = c.m; blocoM.closest('div').style.display = ''; }
+            if (blocoS) { blocoS.textContent = c.s; blocoS.closest('div').style.display = ''; }
+          }
+        });
+      }, 1000);
+    }
+
+    function adicionarNovoLink(tipo) {
+      const t = ITEM_TYPES[tipo] ? tipo : 'link';
+      const item = ITEM_TYPES[t].defaultData();
+      appConfig.links.push(item);
+      salvarConfiguracao();
+      renderizarListaLinksAdmin();
+      dispararAtualizacaoGeral();
+      mostrarToast(t === 'schedule' ? 'Agenda de Lives adicionada!' : t === 'texto' ? 'Bloco de texto adicionado!' : 'Link adicionado!');
     }
 
     function atualizarLinkCampo(index, campo, valor) {
@@ -1861,28 +2174,12 @@
       }
     }
 
-    function adicionarNovoItemTexto() {
-      const exemplo = `Esse é o meu Setup:
-
->**PC**
-* **Placa Mãe:** [Gigabyte B760M Gaming AC](https://meli.la/1rQnFeB)
-* **Processador:** [Intel Core i5 14400F](https://meli.la/1yrRezX)
-* **Memória:** [DDR4 3200 16GB](https://meli.la/3BcVcTV)
-
->**Consoles**
-* [Nintendo Switch](https://meli.la/2Mm8RhW)
-* [PlayStation 5](https://meli.la/2PHHSFy)`;
-      appConfig.links.push({ id: "txt_" + Date.now(), type: "texto", title: "Meu Setup", subtitle: "", url: "", icon: "", highlight: false, badge: "", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, content: exemplo, textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" });
-      salvarConfiguracao();
-      dispararAtualizacaoGeral();
-      mostrarToast('Item de texto adicionado!');
-    }
-
-    // Alterna entre 'link' e 'texto'. Ao virar texto, garante os campos de texto;
-    // ao voltar para link, garante os campos de link — assim nada se perde ao ida e volta.
+    // Alterna entre os tipos do registry. Ao entrar num tipo, garante os campos
+    // daquele tipo; ao sair, garante os do destino — assim nada se perde ao ida e volta.
     function alternarTipoLink(index, novoTipo) {
       const item = appConfig.links[index];
       if (!item || item.type === novoTipo) return;
+      if (!ITEM_TYPES[novoTipo]) return;
       item.type = novoTipo;
       if (novoTipo === 'texto') {
         item.textSize = item.textSize || 'md';
@@ -1891,6 +2188,12 @@
         if (typeof item.content !== 'string' || !item.content) {
           item.content = `>**${item.title || 'Seção'}**\n* [Item](https://)`;
         }
+      } else if (novoTipo === 'schedule') {
+        item.showCountdown = item.showCountdown !== false;
+        if (!Array.isArray(item.scheduleDays) || item.scheduleDays.length !== 7) {
+          item.scheduleDays = SCHEDULE_DIAS_PADRAO();
+        }
+        if (!item.icon) item.icon = 'fa-solid fa-calendar-days';
       } else {
         item.imagePosition = item.imagePosition || 'left';
         item.imageSize = item.imageSize || 'md';
@@ -1900,6 +2203,7 @@
         if (!item.icon) item.icon = 'fa-solid fa-link';
       }
       salvarConfiguracao();
+      renderizarListaLinksAdmin();
       dispararAtualizacaoGeral();
     }
 
@@ -1974,13 +2278,29 @@
         if (!['left', 'top', 'bottom'].includes(item.imagePosition)) item.imagePosition = 'left';
         if (!['sm', 'md', 'lg', 'banner'].includes(item.imageSize)) item.imageSize = 'md';
         if (!['cover', 'contain'].includes(item.imageFit)) item.imageFit = 'cover';
-        if (!['link', 'texto'].includes(item.type)) item.type = 'link';
+        if (!['link', 'texto', 'schedule'].includes(item.type)) item.type = 'link';
         if (typeof item.content !== 'string') item.content = "";
         if (typeof item.textColor !== 'string' || (item.textColor && !/^#[0-9a-f]{6}$/i.test(item.textColor))) item.textColor = "";
         if (!['sm', 'md', 'lg'].includes(item.textSize)) item.textSize = 'md';
         if (!['left', 'center'].includes(item.textAlign)) item.textAlign = 'left';
         if (typeof item.syncLiveStatus !== 'boolean') item.syncLiveStatus = false;
         if (!PLATAFORMAS_LIVE_OPCOES.includes(item.livePlatform)) item.livePlatform = 'auto';
+        // Retrocompatibilidade: item schedule sem grade completa recebe o padrão.
+        if (item.type === 'schedule') {
+          if (typeof item.showCountdown !== 'boolean') item.showCountdown = true;
+          if (!Array.isArray(item.scheduleDays) || item.scheduleDays.length !== 7) {
+            item.scheduleDays = SCHEDULE_DIAS_PADRAO();
+          } else {
+            // Migração: dias com time/info antigos → lives[]
+            item.scheduleDays.forEach(d => {
+              if (!Array.isArray(d.lives)) {
+                d.lives = (d.time || d.info) ? [{ time: d.time || '', info: d.info || '' }] : [];
+                delete d.time;
+                delete d.info;
+              }
+            });
+          }
+        }
       });
       return c;
     }
@@ -2383,6 +2703,126 @@
         .filter(Boolean);
     }
 
+    // Export de um item tipo link: HTML com estilo inline (sem Tailwind).
+    function renderizarLinkExport(l, cfg) {
+      const alvoLive = l.syncLiveStatus ? resolverPlataformaLive(l) : null;
+      const monitoraLive = !!(alvoLive && alvoLive.config.url);
+      const liveBadgeId = monitoraLive ? `liveBadge_${l.id}` : '';
+      const liveSubId = monitoraLive ? `liveSub_${l.id}` : '';
+      const liveIconId = monitoraLive ? `liveIcon_${l.id}` : '';
+      const liveBtnId = monitoraLive ? `liveBtn_${l.id}` : '';
+      const attrLive = (nome, valor) => valor ? ` id="${valor}"` : '';
+      const isHl = l.highlight;
+      const glowCor = (l.glowColor && l.glowColor.trim()) || cfg.primaryColor || '#9146FF';
+      const glowRgb = hexToRgbTriplet(glowCor);
+      const glowVar = isHl ? `--glow-rgb: ${glowRgb}; ` : '';
+
+      const temImg = !!(l.imageUrl && l.imageUrl.trim());
+      const posImg = getItemImagePosition(l);
+      const fit = getItemImageFit(l);
+      const imgSite = escapeHtml(resolverImagemDoItem(l));
+      const imgOriginal = escapeHtml(normalizarUrlImagem(l.imageUrl, ''));
+      const fitSite = fit === 'contain' ? getImgEstiloBannerContido(l) : getImgEstiloBanner(150);
+      const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
+      let midiaHtml;
+      if (temImg && (posImg === 'top' || posImg === 'bottom')) {
+        midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${fitSite}">`;
+      } else if (temImg && posImg === 'left') {
+        midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${getImgEstiloThumb(l)}">`;
+      } else {
+        midiaHtml = `<div${attrLive('liveIcon', liveIconId)} style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
+      }
+
+      const blocoTexto = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; min-width: 0;">
+                <div style="min-width: 0; text-align: left;">
+                  <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
+                  <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
+                </div>
+                <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>
+              </div>`;
+
+      const layoutCol = temImg && (posImg === 'top' || posImg === 'bottom');
+      const conteudo = layoutCol
+        ? `<div style="display: flex; flex-direction: column; width: 100%;">
+              ${posImg === 'bottom' ? blocoTexto + midiaHtml : midiaHtml + blocoTexto}
+            </div>`
+        : `<div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+              ${midiaHtml}
+              <div style="min-width: 0; text-align: left;">
+                <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
+                <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
+              </div>
+            </div>
+            <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>`;
+
+      const cardFlex = layoutCol ? 'flex-direction: column; align-items: stretch; padding: 0; overflow: hidden;' : '';
+
+      return `
+      <a${attrLive('liveBtn', liveBtnId)} href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor, l)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        ${conteudo}
+      </a>`;
+    }
+
+    // Export de um item tipo schedule: HTML base com IDs únicos. O countdown é
+    // gerenciado por um script global único no final do HTML exportado.
+    function renderizarScheduleExport(item, cfg) {
+      const cor = (item.glowColor && item.glowColor.trim()) || cfg.primaryColor || '#9146FF';
+      const rgb = hexToRgbTriplet(cor);
+      const primaria = cfg.primaryColor || '#9146FF';
+      const primariaRgb = hexToRgbTriplet(primaria);
+      const dias = Array.isArray(item.scheduleDays) ? item.scheduleDays : [];
+      const diaAtual = new Date().getDay();
+      const agora = new Date();
+      const proxima = calcularProximaLive(dias, agora);
+      const c = proxima ? formatarCountdownBlocos(proxima.alvo - agora) : { d: '00', h: '00', m: '00', s: '00' };
+
+      const bloco = (v, rot) => `
+              <div style="display:flex;flex-direction:column;align-items:center;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid #3f3f46;">
+                <span style="font-size:20px;font-weight:900;font-family:monospace;color:#fff;line-height:1;" data-countdown="${rot}">${v}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#a1a1aa;margin-top:2px;">${rot}</span>
+              </div>`;
+
+      const gradeHtml = dias.map(dia => {
+        const ehHoje = Number(dia.day) === diaAtual;
+        const borda = ehHoje ? `2px solid ${primaria}` : '1px solid #27272a';
+        const fundo = ehHoje ? `rgba(${primariaRgb}, 0.18)` : 'rgba(24,24,27,.72)';
+        const corTexto = ehHoje ? primaria : (dia.active ? '#d4d4d8' : '#71717a');
+        const lives = Array.isArray(dia.lives) ? dia.lives : [];
+        const livesHtml = lives.length
+          ? lives.map(l => `
+              <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+                <span style="font-size:9px;font-family:monospace;color:${dia.active ? '#e4e4e7' : '#52525b'};">${escapeHtml(l.time || '—')}</span>
+                ${l.info ? `<span style="font-size:8px;color:#71717a;text-align:center;line-height:1.2;">${escapeHtml(l.info)}</span>` : ''}
+              </div>`).join('')
+          : `<span style="font-size:9px;font-family:monospace;color:#52525b;">—</span>`;
+        return `
+            <div style="display:flex;flex-direction:column;align-items:center;padding:6px 4px;border-radius:8px;background:${fundo};border:${borda};gap:2px;">
+              <span style="font-size:10px;font-weight:900;color:${corTexto};">${escapeHtml(dia.label)}</span>
+              ${livesHtml}
+            </div>`;
+      }).join('');
+
+      const estiloCard = item.highlight
+        ? `border: 2px solid ${cor}; box-shadow: 0 0 20px rgba(${rgb}, 0.55);`
+        : `border: 1px solid #27272a; box-shadow: 0 10px 15px -3px rgba(0,0,0,.4);`;
+
+      return `
+          <div data-countdown-wrap="${item.id}" style="width:100%;padding:16px;border-radius:16px;display:flex;flex-direction:column;gap:8px;background:rgba(24,24,27,.72);${estiloCard} --glow-rgb: ${rgb};">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="color:${cor};font-size:14px;">${renderizarIcone(item.icon)}</span>
+              <span style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</span>
+            </div>
+            ${item.showCountdown !== false ? `
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0;">
+              <span data-countdown-alvo style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#a1a1aa;">${proxima ? `Próxima live: ${escapeHtml(proxima.dia.label)}${proxima.live && proxima.live.info ? ' · ' + escapeHtml(proxima.live.info) : ''}` : 'Nenhum dia ativo na agenda.'}</span>
+              <div style="display:flex;gap:6px;">
+                ${bloco(c.d, 'd')}${bloco(c.h, 'h')}${bloco(c.m, 'm')}${bloco(c.s, 's')}
+              </div>
+            </div>` : ''}
+            <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;">${gradeHtml}</div>
+          </div>`;
+    }
+
     function gerarCodigoHTMLPronto() {
       const cfg = appConfig;
       const channel = (cfg.twitchUsername || 'omarotto').trim().toLowerCase();
@@ -2398,83 +2838,33 @@
       </a>`; })();
       });
 
+      // Loop principal do export: delega ao renderer público de cada tipo.
+      // O renderer devolve HTML com estilo inline (o arquivo exportado não tem
+      // Tailwind), então o mesmo código serve para link, texto e schedule.
       let linksHtml = '';
+      const scheduleExportData = [];
       (cfg.links || []).filter(l => l.active).forEach(l => {
-        // Item de texto: emite o markdown já renderizado (o arquivo exportado é
-        // estático e não carrega o painel, então o parser roda aqui na exportação).
-        if (l.type === 'texto') {
-          const corBarra = (l.textColor && l.textColor.trim()) || cfg.primaryColor || '#9146FF';
-          const tam = { sm: '11px', md: '13px', lg: '15px' }[l.textSize] || '13px';
-          const alin = l.textAlign === 'center' ? 'center' : 'left';
-          linksHtml += `<div style="width:100%;text-align:${alin};font-size:${tam};color:#a1a1aa;line-height:1.65;word-break:break-word;">${markdownParaHtml(l.content, { corBarra })}</div>\n`;
+        if (l.type === 'schedule') {
+          const html = renderizarScheduleExport(l, cfg);
+          linksHtml += html;
+          scheduleExportData.push({
+            id: l.id,
+            showCountdown: l.showCountdown !== false,
+            dias: (Array.isArray(l.scheduleDays) ? l.scheduleDays : []).map(d => ({
+              day: Number(d.day), label: d.label, active: !!d.active,
+              lives: Array.isArray(d.lives) ? d.lives.map(lv => ({
+                time: lv.time || '', info: lv.info || ''
+              })) : []
+            }))
+          });
           return;
         }
-        // Item monitorado: só recebe os hooks de live se `syncLiveStatus` estiver ligado
-// E a plataforma resolvida tiver endpoint público. Os ids são derivados do id do
-        // item, então vários canais podem ficar "ao vivo" ao mesmo tempo sem colidir.
-        const alvoLive = l.syncLiveStatus ? resolverPlataformaLive(l) : null;
-        const monitoraLive = !!(alvoLive && alvoLive.config.url);
-        const liveBadgeId = monitoraLive ? `liveBadge_${l.id}` : '';
-        const liveSubId = monitoraLive ? `liveSub_${l.id}` : '';
-        const liveIconId = monitoraLive ? `liveIcon_${l.id}` : '';
-        const liveBtnId = monitoraLive ? `liveBtn_${l.id}` : '';
-        // Sem hook de live, não emite atributo id vazio no HTML exportado.
-        const attrLive = (nome, valor) => valor ? ` id="${valor}"` : '';
-        const isTwitch = monitoraLive;
-        const isHl = l.highlight;
-        const glowCor = (l.glowColor && l.glowColor.trim()) || cfg.primaryColor || '#9146FF';
-        const glowRgb = hexToRgbTriplet(glowCor);
-        const bg = isHl ? 'rgba(88, 28, 135, 0.35)' : '#18181b';
-        const border = isHl ? glowCor : '#27272a';
-        const shadow = isHl ? `0 0 20px rgba(${glowRgb}, 0.4)` : 'none';
-        const glowVar = isHl ? `--glow-rgb: ${glowRgb}; ` : '';
-
-        const temImg = !!(l.imageUrl && l.imageUrl.trim());
-        const posImg = getItemImagePosition(l);
-        const fit = getItemImageFit(l);
-        let midiaHtml;
-        const imgSite = escapeHtml(resolverImagemDoItem(l));
-        const imgOriginal = escapeHtml(normalizarUrlImagem(l.imageUrl, ''));
-        const fitSite = fit === 'contain' ? getImgEstiloBannerContido(l) : getImgEstiloBanner(150);
-        const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
-        if (temImg && (posImg === 'top' || posImg === 'bottom')) {
-          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${fitSite}">`;
-        } else if (temImg && posImg === 'left') {
-          midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${getImgEstiloThumb(l)}">`;
+        const renderer = ITEM_PUBLIC_RENDERERS[l.type] || ITEM_PUBLIC_RENDERERS.link;
+        if (l.type === 'link') {
+          linksHtml += renderizarLinkExport(l, cfg);
         } else {
-          midiaHtml = `<div${attrLive('liveIcon', liveIconId)} style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
+          linksHtml += renderer(l, false).html || '';
         }
-
-        const blocoTexto = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; min-width: 0;">
-                <div style="min-width: 0; text-align: left;">
-                  <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
-                  <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
-                </div>
-                <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>
-              </div>`;
-
-        const layoutCol = temImg && (posImg === 'top' || posImg === 'bottom');
-        const conteudo = layoutCol
-          ? `<div style="display: flex; flex-direction: column; width: 100%;">
-              ${posImg === 'bottom' ? blocoTexto + midiaHtml : midiaHtml + blocoTexto}
-            </div>`
-          : `<div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
-              ${midiaHtml}
-              <div style="min-width: 0; text-align: left;">
-                <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
-                <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
-              </div>
-            </div>
-            <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>`;
-
-        const cardFlex = layoutCol
-          ? 'flex-direction: column; align-items: stretch; padding: 0; overflow: hidden;'
-          : '';
-
-        linksHtml += `
-      <a${attrLive('liveBtn', liveBtnId)} href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor, l)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-        ${conteudo}
-      </a>`;
       });
 
       return `<!DOCTYPE html>
@@ -2628,10 +3018,82 @@
           badgeWrap.style.display = 'block';
           badgeText.innerText = statusTag + (uptimePrincipal ? ' (' + uptimePrincipal + ')' : '');
           badgeWrap.querySelector('a').href = alvoPrincipal ? alvoPrincipal.href : 'https://twitch.tv/' + channelName;
+          // Expõe o estado de live para o script de countdown dos itens schedule.
+          window.__twitchLiveState = { isLive: true };
         } else {
           badgeWrap.style.display = 'none';
+          window.__twitchLiveState = { isLive: false };
         }
       }
+    }
+
+    // Script global único de countdown para todos os itens schedule do export.
+    // Espelha calcularProximaLive do painel, incluindo o avanço de +7 dias
+    // quando a live de hoje já passou ou quando só há um dia ativo na semana.
+    const SCHEDULE_EXPORT = ${JSON.stringify(scheduleExportData)};
+    function extrairMinutosDoHorarioExp(time) {
+      const t = String(time || '').trim();
+      if (!t) return null;
+      const m = t.match(/(\d{1,2})\s*[:hH]\s*(\d{2})?/);
+      if (!m) return null;
+      const h = parseInt(m[1], 10);
+      const min = m[2] ? parseInt(m[2], 10) : 0;
+      if (h > 23 || min > 59) return null;
+      return h * 60 + min;
+    }
+    function calcularProximaLiveExp(dias, agora) {
+      if (!dias || !dias.length) return null;
+      const base = agora ? new Date(agora) : new Date();
+      const diaAgora = base.getDay();
+      const agoraMin = base.getHours() * 60 + base.getMinutes() + base.getSeconds() / 60;
+      for (let offset = 0; offset < 8; offset++) {
+        const diaIdx = (diaAgora + offset) % 7;
+        const dia = dias.find(d => Number(d.day) === diaIdx) || dias[diaIdx];
+        if (!dia || !dia.active) continue;
+        const lives = Array.isArray(dia.lives) ? dia.lives : [];
+        const livesOrdenadas = lives
+          .map(l => ({ live: l, min: extrairMinutosDoHorarioExp(l.time) }))
+          .filter(x => x.min !== null)
+          .sort((a, b) => a.min - b.min);
+        const proxima = livesOrdenadas.find(x => offset > 0 || x.min > agoraMin);
+        if (!proxima) continue;
+        const alvo = new Date(base);
+        alvo.setDate(base.getDate() + offset);
+        alvo.setHours(Math.floor(proxima.min / 60), proxima.min % 60, 0, 0);
+        return { alvo, dia, live: proxima.live, offset };
+      }
+      return null;
+    }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function atualizarCountdownsExport() {
+      const aoVivo = !!(autoDetect && window.__twitchLiveState && window.__twitchLiveState.isLive);
+      SCHEDULE_EXPORT.forEach(item => {
+        if (!item.showCountdown) return;
+        const wrap = document.querySelector('[data-countdown-wrap="' + item.id + '"]');
+        if (!wrap) return;
+        const proxima = calcularProximaLiveExp(item.dias, new Date());
+        const alvoEl = wrap.querySelector('[data-countdown-alvo]');
+        const blocos = {
+          d: wrap.querySelector('[data-countdown="d"]'),
+          h: wrap.querySelector('[data-countdown="h"]'),
+          m: wrap.querySelector('[data-countdown="m"]'),
+          s: wrap.querySelector('[data-countdown="s"]')
+        };
+        if (aoVivo) {
+          if (alvoEl) alvoEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;animation:liveGlow 2s infinite;"></span><span style="font-size:14px;font-weight:900;text-transform:uppercase;color:#fca5a5;">🔴 AO VIVO AGORA!</span></div>';
+          Object.values(blocos).forEach(b => { if (b && b.closest('div')) b.closest('div').style.display = 'none'; });
+        } else if (proxima) {
+          if (alvoEl) alvoEl.innerHTML = '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#a1a1aa;">Próxima live: ' + (proxima.dia.label || '') + (proxima.live && proxima.live.info ? ' · ' + proxima.live.info : '') + '</span>';
+          const ms = Math.max(0, proxima.alvo - new Date());
+          const total = Math.floor(ms / 1000);
+          const vals = { d: pad2(Math.floor(total / 86400)), h: pad2(Math.floor((total % 86400) / 3600)), m: pad2(Math.floor((total % 3600) / 60)), s: pad2(total % 60) };
+          Object.entries(blocos).forEach(([k, b]) => { if (b && b.closest('div')) { b.textContent = vals[k]; b.closest('div').style.display = ''; } });
+        }
+      });
+    }
+    if (SCHEDULE_EXPORT.length) {
+      atualizarCountdownsExport();
+      setInterval(atualizarCountdownsExport, 1000);
     }
 
     checarLiveItens();
