@@ -194,7 +194,7 @@
 
         <div class="relative group cursor-pointer mb-4">
           <div id="pubAvatarGlow" class="absolute -inset-1 rounded-full opacity-75 blur-md group-hover:opacity-100 transition duration-500"></div>
-          <img id="pubAvatarImg" src="Bio and pannel/Fotos/foto-5.png" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/160x160/1a1a24/9146FF?text=OM'" class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-zinc-800 shadow-2xl transition duration-300 group-hover:scale-105" />
+          <img id="pubAvatarImg" src="Fotos/foto-5.png" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/160x160/1a1a24/9146FF?text=OM'" class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-zinc-800 shadow-2xl transition duration-300 group-hover:scale-105" />
           <div id="pubVerifiedBadge" class="absolute bottom-1 right-1 text-white w-6 h-6 rounded-full flex items-center justify-center text-[11px] border-2 border-zinc-900 shadow">
             <i class="fa-solid fa-check"></i>
           </div>
@@ -265,7 +265,7 @@
 
                 <div class="relative group mb-2.5">
                   <div id="prevAvatarGlow" class="absolute -inset-1 rounded-full opacity-75 blur-sm transition duration-300"></div>
-                  <img id="prevAvatarImg" src="Bio and pannel/Fotos/foto-5.png" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/120x120/1a1a24/9146FF?text=OM'" class="relative w-20 h-20 rounded-full object-cover border-2 border-zinc-800 shadow-xl" />
+                  <img id="prevAvatarImg" src="Fotos/foto-5.png" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/120x120/1a1a24/9146FF?text=OM'" class="relative w-20 h-20 rounded-full object-cover border-2 border-zinc-800 shadow-xl" />
                   <div id="prevVerifiedBadge" class="absolute bottom-0 right-0 text-white w-5 h-5 rounded-full flex items-center justify-center text-[9px] border-2 border-zinc-900 shadow">
                     <i class="fa-solid fa-check"></i>
                   </div>
@@ -375,7 +375,7 @@
               <div>
                 <label class="block text-xs font-medium text-zinc-400 mb-1">Foto de Perfil (Caminho Relativo, URL ou Arquivo)</label>
                 <div class="flex gap-2">
-                  <input type="text" id="cfgAvatarUrl" oninput="dispararAtualizacaoGeral()" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition" placeholder="Bio and pannel/Fotos/foto-5.png ou URL">
+                  <input type="text" id="cfgAvatarUrl" oninput="dispararAtualizacaoGeral()" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition" placeholder="Fotos/foto-5.png ou URL">
                   <label class="cursor-pointer bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-3 py-2 rounded-xl text-xs flex items-center justify-center text-zinc-200 transition" title="Carregar do dispositivo">
                     <i class="fa-solid fa-upload"></i>
                     <input type="file" id="cfgAvatarFile" accept="image/*" class="hidden" onchange="tratarUploadAvatar(event)">
@@ -389,7 +389,7 @@
                   </summary>
                   <div class="mt-2 space-y-2 pl-1 border-l border-zinc-800">
                     <p><span class="text-zinc-300 font-medium">Se a imagem está neste projeto</span> — use o caminho a partir da raiz do repositório, com a barra normal:</p>
-                    <code class="block bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-[11px] text-purple-300 break-all">Bio and pannel/Fotos/foto-5.png</code>
+                    <code class="block bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-[11px] text-purple-300 break-all">Fotos/foto-5.png</code>
                     <p><span class="text-zinc-300 font-medium">Se está no GitHub</span> — clique com o botão direito na imagem → <em>Copiar endereço da imagem</em>. Pode colar o link do jeito que aparecer (com <code class="text-zinc-400">/blob/</code> ou <code class="text-zinc-400">/raw/</code>); o painel ajusta sozinho. Serve em qualquer pasta, não precisa ser <code class="text-zinc-400">Fotos/</code>.</p>
                     <code class="block bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-[11px] text-purple-300 break-all">https://github.com/<dono>/<repositório>/blob/main/<pasta>/<arquivo></code>
                     <p class="text-zinc-500">Espaços aparecem como <code class="text-zinc-400">%20</code> — pode deixar assim.</p>
@@ -652,7 +652,7 @@
       twitchUsername: "omarotto",
       autoDetectLive: true,
       checkIntervalMs: 60000,
-      avatarUrl: "Bio and pannel/Fotos/foto-5.png",
+      avatarUrl: "Fotos/foto-5.png",
       bio: "Criador de conteúdo, Gamer & Desenvolvedor de Widgets.\nAcompanhe minhas lives e confira os projetos nos links abaixo!",
       statusTag: "🔴 AO VIVO NA TWITCH",
       primaryColor: "#9146FF",
@@ -697,6 +697,9 @@
     // Para plugar um bloco novo no futuro: registre a chave em ITEM_TYPES,
     // em ITEM_ADMIN_RENDERERS e em ITEM_PUBLIC_RENDERERS. Nada mais muda.
     // ============================================================================
+    // Sempre com ao menos um dia ativo: um item schedule recém-criado já nasce
+    // com contagem regressiva funcionando (calcularProximaLive nunca retorna
+    // null por falta de dia ativo).
     const SCHEDULE_DIAS_PADRAO = () => ([
       { day: 0, label: "DOM", active: false, lives: [] },
       { day: 1, label: "SEG", active: true,  lives: [{ time: "19:00", info: "Gameplay" }] },
@@ -704,7 +707,7 @@
       { day: 3, label: "QUA", active: true,  lives: [{ time: "19:00", info: "Comunidade" }] },
       { day: 4, label: "QUI", active: false, lives: [] },
       { day: 5, label: "SEX", active: true,  lives: [{ time: "20:00", info: "Sextou com Chat" }] },
-      { day: 6, label: "SÁB", active: false, lives: [] }
+      { day: 6, label: "SÁB", active: true,  lives: [{ time: "21:00", info: "Live de Sábado" }] }
     ]);
 
     const ITEM_TYPES = {
@@ -1050,7 +1053,7 @@
         g('prevFooter').style.display = appConfig.showFooter !== false ? '' : 'none';
       }
 
-      const avatarSrc = normalizarUrlImagem(appConfig.avatarUrl, 'Bio and pannel/Fotos/foto-5.png');
+      const avatarSrc = normalizarUrlImagem(appConfig.avatarUrl, 'Fotos/foto-5.png');
       if (g('pubAvatarImg')) g('pubAvatarImg').src = avatarSrc;
       if (g('prevAvatarImg')) g('prevAvatarImg').src = avatarSrc;
 
@@ -1656,15 +1659,15 @@
         };
 
         const blocoTexto = (isM) => `
-          <div class="flex items-center justify-between ${isM ? 'gap-2 min-w-0 p-2.5' : 'gap-3.5 min-w-0 p-4'}">
-            <div class="${isM ? 'min-w-0 truncate' : 'min-w-0'}">
+          <div class="flex items-center justify-between flex-1 ${isM ? 'gap-2 min-w-0' : 'gap-3.5 min-w-0'}">
+            <div class="${isM ? 'min-w-0 truncate flex-1' : 'min-w-0 flex-1'}">
               <div class="flex items-center ${isM ? 'gap-1.5 truncate' : 'gap-2'}">
                 <span class="font-bold ${isM ? 'text-xs text-zinc-100 truncate' : 'text-sm text-zinc-100 group-hover:text-white truncate'}">${escapeHtml(item.title)}</span>
                 ${badgeHtml}
               </div>
               ${subtitleText ? `<p class="${isM ? 'text-[10px]' : 'text-xs'} ${linkIsLive ? 'text-red-200 font-medium' : 'text-zinc-400'} truncate mt-0.5">${escapeHtml(subtitleText)}</p>` : ''}
             </div>
-            <div class="flex-shrink-0 ${linkIsLive ? 'text-red-300' : 'text-zinc-500'} group-hover:text-zinc-200 transition duration-200 pl-2">
+            <div class="flex-shrink-0 ml-auto ${linkIsLive ? 'text-red-300' : 'text-zinc-500'} group-hover:text-zinc-200 transition duration-200 pl-2">
               <i class="fa-solid fa-chevron-right ${isM ? 'text-[10px]' : 'text-xs'}"></i>
             </div>
           </div>`;
@@ -1676,7 +1679,7 @@
         const layoutCol = temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom');
         const conteudo = layoutCol
           ? `<div class="flex flex-col gap-0 w-full">${posicaoImg === 'bottom' ? blocoTexto(isMockup) + midiaHtml : midiaHtml + blocoTexto(isMockup)}</div>`
-          : `<div class="flex items-center ${isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2'}">${midiaHtml}${blocoTexto(isMockup)}</div>`;
+          : `<div class="flex items-center ${isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2'} flex-1 w-full">${midiaHtml}${blocoTexto(isMockup)}</div>`;
 
         return { conteudo, layoutCol, linkIsLive, item };
       },
@@ -1715,9 +1718,9 @@
               </div>`;
             countdownHtml = `
               <div class="flex flex-col items-center gap-1.5 py-2">
-                <span data-countdown-alvo class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Próxima live: ${escapeHtml(proxima.dia.label)}${proxima.dia.info ? ' · ' + escapeHtml(proxima.dia.info) : ''}</span>
+                <span data-countdown-alvo class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Próxima live: ${escapeHtml(proxima.dia.label)}${proxima.live && proxima.live.info ? ' · ' + escapeHtml(proxima.live.info) : ''}</span>
                 <div class="flex items-center gap-1.5">
-                  ${bloco(c.d, 'Dias')}${bloco(c.h, 'Horas')}${bloco(c.m, 'Min')}${bloco(c.s, 'Seg')}
+                  ${bloco(c.d, 'd')}${bloco(c.h, 'h')}${bloco(c.m, 'm')}${bloco(c.s, 's')}
                 </div>
               </div>`;
           } else {
@@ -1753,7 +1756,7 @@
 
         return {
           html: `
-          <div data-countdown-wrap="${item.id}" class="w-full ${isMockup ? 'p-2.5' : 'p-4'} ${appConfig.buttonRadius || 'rounded-2xl'} flex flex-col gap-2 ${item.highlight ? 'animate-pulse-glow' : ''}" style="background: rgba(24,24,27,.72); ${estiloCard} ${vidro} --glow-rgb: ${rgb};">
+          <div data-countdown-wrap="${isMockup ? 'mock_' : ''}${item.id}" class="w-full ${isMockup ? 'p-2.5' : 'p-4'} rounded-2xl flex flex-col gap-2 ${item.highlight ? 'animate-pulse-glow' : ''}" style="background: rgba(24,24,27,.72); ${estiloCard} ${vidro} --glow-rgb: ${rgb};">
             <div class="flex items-center gap-2">
               <span class="${isMockup ? 'text-xs' : 'text-sm'}" style="color:${cor};">${renderizarIcone(item.icon)}</span>
               <span class="${isMockup ? 'text-xs' : 'text-sm'} font-bold text-white truncate">${escapeHtml(item.title)}</span>
@@ -1881,14 +1884,15 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
             <div class="sm:col-span-3 flex items-center gap-2"><label class="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" ${item.useFavicon ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'useFavicon', this.checked)" class="w-3.5 h-3.5 accent-purple-600"><span class="text-[11px] font-medium text-zinc-300">Usar favicon</span></label><span title="Ative para transformar URLs de sites, como twitch.tv ou github.com, no favicon do domínio. Desative para tentar carregar a URL original como imagem." class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-zinc-600 text-[10px] text-zinc-400 cursor-help">?</span></div>
             <div class="sm:col-span-3"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem (opcional)</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="left" ${(item.imagePosition || 'left') === 'left' ? 'selected' : ''}>Miniatura à Esquerda</option><option value="top" ${item.imagePosition === 'top' ? 'selected' : ''}>Banner Acima</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Banner Abaixo</option></select></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Enquadramento da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageFit', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="cover" ${(!item.imageFit || item.imageFit === 'cover') ? 'selected' : ''}>Preencher / Cortar</option><option value="contain" ${item.imageFit === 'contain' ? 'selected' : ''}>Inteira / Sem Cortar</option></select></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="sm" ${item.imageSize === 'sm' ? 'selected' : ''}>Pequeno</option><option value="md" ${(!item.imageSize || item.imageSize === 'md') ? 'selected' : ''}>Médio</option><option value="lg" ${item.imageSize === 'lg' ? 'selected' : ''}>Destaque</option><option value="banner" ${item.imageSize === 'banner' ? 'selected' : ''}>Banner Grande</option></select></div>
+            <div class="sm:col-span-1"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="left" ${(item.imagePosition || 'left') === 'left' ? 'selected' : ''}>Miniatura à Esquerda</option><option value="top" ${item.imagePosition === 'top' ? 'selected' : ''}>Banner Acima</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Banner Abaixo</option></select></div>
+            <div class="sm:col-span-1"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Enquadramento da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageFit', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="cover" ${(!item.imageFit || item.imageFit === 'cover') ? 'selected' : ''}>Preencher / Cortar</option><option value="contain" ${item.imageFit === 'contain' ? 'selected' : ''}>Inteira / Sem Cortar</option></select></div>
+            <div class="sm:col-span-1"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="sm" ${item.imageSize === 'sm' ? 'selected' : ''}>Pequeno</option><option value="md" ${(!item.imageSize || item.imageSize === 'md') ? 'selected' : ''}>Médio</option><option value="lg" ${item.imageSize === 'lg' ? 'selected' : ''}>Destaque</option><option value="banner" ${item.imageSize === 'banner' ? 'selected' : ''}>Banner Grande</option></select></div>
           </div>`;
       },
 
       texto(item, index) {
         return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Conteúdo (Markdown)</label>
               <textarea rows="10" oninput="atualizarLinkCampo(${index}, 'content', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-purple-500" style="resize:vertical;line-height:1.5;" spellcheck="false" placeholder="Esse é o meu Setup:&#10;&#10;>**PC**&#10;* **Placa Mãe:** [Gigabyte B760M](https://exemplo.com)">${escapeHtml(item.content || '')}</textarea>
               <p class="text-[10px] text-zinc-500 mt-1 leading-relaxed"><strong>PC</strong> negrito · <em>*itálico*</em> · <s>~~riscado~~</s> · [link](url) · <code>&gt;PC</code> título com barra · <code>#</code>/<code>##</code> headings · <code>-</code> ou <code>*</code> lista · <code>1.</code> lista numerada · 2 espaços no fim = quebra de linha</p>
@@ -1905,7 +1909,8 @@
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Alinhamento</label><select onchange="atualizarLinkCampo(${index}, 'textAlign', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500">
               <option value="left" ${(!item.textAlign || item.textAlign === 'left') ? 'selected' : ''}>À esquerda</option>
               <option value="center" ${item.textAlign === 'center' ? 'selected' : ''}>Centralizado</option>
-            </select></div>`;
+            </select></div>
+          </div>`;
       },
 
       schedule(item, index) {
@@ -2064,9 +2069,7 @@
               <button onclick="excluirLink(${index})" class="p-1.5 text-zinc-500 hover:text-red-400 rounded hover:bg-red-950/30 transition ml-1"><i class="fa-solid fa-trash-can text-xs"></i></button>
             </div>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            ${(ITEM_ADMIN_RENDERERS[item.type] || ITEM_ADMIN_RENDERERS.link)(item, index)}
-          </div>
+          ${(ITEM_ADMIN_RENDERERS[item.type] || ITEM_ADMIN_RENDERERS.link)(item, index)}
         `;
         container.appendChild(card);
       });
@@ -2130,28 +2133,32 @@
         const aoVivo = !!(appConfig.autoDetectLive && twitchLiveState.isLive);
         (appConfig.links || []).filter(l => l.active && l.type === 'schedule').forEach(item => {
           const proxima = calcularProximaLive(item.scheduleDays, new Date());
-          const wrap = document.querySelector(`[data-countdown-wrap="${item.id}"]`);
-          if (!wrap) return;
-          const blocoD = wrap.querySelector('[data-countdown="d"]');
-          const blocoH = wrap.querySelector('[data-countdown="h"]');
-          const blocoM = wrap.querySelector('[data-countdown="m"]');
-          const blocoS = wrap.querySelector('[data-countdown="s"]');
-          const alvoWrap = wrap.querySelector('[data-countdown-alvo]');
-          if (aoVivo) {
-            if (alvoWrap) {
-              alvoWrap.innerHTML = `<div class="flex items-center justify-center gap-2 py-2"><span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span><span class="text-sm font-black tracking-wide text-red-300 uppercase">🔴 AO VIVO AGORA!</span></div>`;
+          // O mesmo item aparece no canvas público e no mockup do celular: o
+          // renderer usa o prefixo "mock_" no wrap do preview, então ambos os
+          // blocos são atualizados a cada tick (querySelector pegaria só o 1º).
+          const wraps = document.querySelectorAll(`[data-countdown-wrap="${item.id}"], [data-countdown-wrap="mock_${item.id}"]`);
+          wraps.forEach(wrap => {
+            const blocoD = wrap.querySelector('[data-countdown="d"]');
+            const blocoH = wrap.querySelector('[data-countdown="h"]');
+            const blocoM = wrap.querySelector('[data-countdown="m"]');
+            const blocoS = wrap.querySelector('[data-countdown="s"]');
+            const alvoWrap = wrap.querySelector('[data-countdown-alvo]');
+            if (aoVivo) {
+              if (alvoWrap) {
+                alvoWrap.innerHTML = `<div class="flex items-center justify-center gap-2 py-2"><span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span><span class="text-sm font-black tracking-wide text-red-300 uppercase">🔴 AO VIVO AGORA!</span></div>`;
+              }
+              [blocoD, blocoH, blocoM, blocoS].forEach(b => { if (b) b.closest('div').style.display = 'none'; });
+            } else if (proxima) {
+              if (alvoWrap) {
+                alvoWrap.innerHTML = `<span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Próxima live: ${escapeHtml(proxima.dia.label)}${proxima.live && proxima.live.info ? ' · ' + escapeHtml(proxima.live.info) : ''}</span>`;
+              }
+              const c = formatarCountdownBlocos(proxima.alvo - new Date());
+              if (blocoD) { blocoD.textContent = c.d; blocoD.closest('div').style.display = ''; }
+              if (blocoH) { blocoH.textContent = c.h; blocoH.closest('div').style.display = ''; }
+              if (blocoM) { blocoM.textContent = c.m; blocoM.closest('div').style.display = ''; }
+              if (blocoS) { blocoS.textContent = c.s; blocoS.closest('div').style.display = ''; }
             }
-            [blocoD, blocoH, blocoM, blocoS].forEach(b => { if (b) b.closest('div').style.display = 'none'; });
-          } else if (proxima) {
-            if (alvoWrap) {
-              alvoWrap.innerHTML = `<span class="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Próxima live: ${escapeHtml(proxima.dia.label)}${proxima.dia.info ? ' · ' + escapeHtml(proxima.dia.info) : ''}</span>`;
-            }
-            const c = formatarCountdownBlocos(proxima.alvo - new Date());
-            if (blocoD) { blocoD.textContent = c.d; blocoD.closest('div').style.display = ''; }
-            if (blocoH) { blocoH.textContent = c.h; blocoH.closest('div').style.display = ''; }
-            if (blocoM) { blocoM.textContent = c.m; blocoM.closest('div').style.display = ''; }
-            if (blocoS) { blocoS.textContent = c.s; blocoS.closest('div').style.display = ''; }
-          }
+          });
         });
       }, 1000);
     }
@@ -2192,6 +2199,11 @@
         item.showCountdown = item.showCountdown !== false;
         if (!Array.isArray(item.scheduleDays) || item.scheduleDays.length !== 7) {
           item.scheduleDays = SCHEDULE_DIAS_PADRAO();
+        } else if (!item.scheduleDays.some(d => d.active && Array.isArray(d.lives) && d.lives.length)) {
+          // Grade legada sem nenhum dia ativo: reativa a SEG padrão para o
+          // countdown não nascer vazio.
+          item.scheduleDays[1].active = true;
+          item.scheduleDays[1].lives = [{ time: "19:00", info: "Gameplay" }];
         }
         if (!item.icon) item.icon = 'fa-solid fa-calendar-days';
       } else {
@@ -2299,6 +2311,12 @@
                 delete d.info;
               }
             });
+            // Garante ao menos um dia ativo: sem isso o countdown ficaria vazio
+            // ("Nenhum dia ativo na agenda") para sempre.
+            if (!item.scheduleDays.some(d => d.active && Array.isArray(d.lives) && d.lives.length)) {
+              item.scheduleDays[1].active = true;
+              item.scheduleDays[1].lives = [{ time: "19:00", info: "Gameplay" }];
+            }
           }
         }
       });
@@ -2807,7 +2825,7 @@
         : `border: 1px solid #27272a; box-shadow: 0 10px 15px -3px rgba(0,0,0,.4);`;
 
       return `
-          <div data-countdown-wrap="${item.id}" style="width:100%;padding:16px;border-radius:16px;display:flex;flex-direction:column;gap:8px;background:rgba(24,24,27,.72);${estiloCard} --glow-rgb: ${rgb};">
+          <div data-countdown-wrap="export_${item.id}" style="width:100%;padding:16px;border-radius:16px;display:flex;flex-direction:column;gap:8px;background:rgba(24,24,27,.72);${estiloCard} --glow-rgb: ${rgb};">
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="color:${cor};font-size:14px;">${renderizarIcone(item.icon)}</span>
               <span style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</span>
@@ -2907,7 +2925,7 @@
       </a>
     </div>
 
-    <img src="${normalizarUrlImagem(cfg.avatarUrl, 'Bio and pannel/Fotos/foto-5.png')}" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/110x110/18181b/9146FF?text=OM'" class="avatar">
+    <img src="${normalizarUrlImagem(cfg.avatarUrl, 'Fotos/foto-5.png')}" alt="Avatar" onerror="this.onerror=null; this.src='https://placehold.co/110x110/18181b/9146FF?text=OM'" class="avatar">
     <h1 style="font-size: 22px; font-weight: 800;">${escapeHtml(cfg.displayName)}</h1>
     <p style="font-size: 14px; font-weight: 600; color: ${cfg.primaryColor}; margin-top: 4px;">${escapeHtml(cfg.username)}</p>
     <p style="font-size: 14px; color: ${escapeHtml(cfg.bioColor || '#a1a1aa')}; max-width: 560px; margin: 12px 0 20px 0; line-height: 1.6; white-space: pre-line;">${escapeHtml(cfg.bio)}</p>
@@ -3069,7 +3087,7 @@
       const aoVivo = !!(autoDetect && window.__twitchLiveState && window.__twitchLiveState.isLive);
       SCHEDULE_EXPORT.forEach(item => {
         if (!item.showCountdown) return;
-        const wrap = document.querySelector('[data-countdown-wrap="' + item.id + '"]');
+        const wrap = document.querySelector('[data-countdown-wrap="export_' + item.id + '"]');
         if (!wrap) return;
         const proxima = calcularProximaLiveExp(item.dias, new Date());
         const alvoEl = wrap.querySelector('[data-countdown-alvo]');
