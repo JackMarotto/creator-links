@@ -557,9 +557,11 @@
               </div>
               <div class="flex items-center gap-2">
                 <select id="novoItemType" class="px-2 py-2 rounded-xl text-xs bg-zinc-800 border border-zinc-700 text-zinc-200 focus:outline-none focus:border-purple-500" title="Tipo do novo item">
-                  <option value="link">Link / Botão</option>
+                  <option value="link">Link</option>
+                  <option value="imagem">Imagem</option>
                   <option value="texto">Texto</option>
-                  <option value="schedule">Agenda de Lives</option>
+                  <option value="schedule">Agenda</option>
+                  <option value="lista">Lista</option>
                 </select>
                 <button onclick="adicionarNovoLink(document.getElementById('novoItemType').value)" class="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md shadow-emerald-700/30">
                   <i class="fa-solid fa-plus"></i> Novo Item
@@ -680,11 +682,11 @@
         { id: "s_tiktok", name: "TikTok", icon: "fa-brands fa-tiktok", url: "https://tiktok.com/@omarotto", active: false }
       ],
       links: [
-        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true , glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" },
-        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover", useFavicon: false, type: "link", content: "", textColor: "", textSize: "md", textAlign: "left", syncLiveStatus: false, livePlatform: "auto" }
+        { id: "link_twitch_main", title: "Canal de Lives na Twitch", subtitle: "Transmissões quase todos os dias às 19h", url: "https://twitch.tv/omarotto", icon: "fa-brands fa-twitch", highlight: false, badge: "", active: true, glowColor: "", type: "link", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_discord", title: "Comunidade no Discord", subtitle: "Participe de sorteios, bate-papo e novidades", url: "https://discord.gg", icon: "fa-brands fa-discord", highlight: false, badge: "VIP", active: true, glowColor: "", type: "link", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_widgets", title: "Widgets Gratuitos para OBS", subtitle: "Widgets de jogo atual, metas e avisos de live", url: "https://github.com/jackmarotto/Streamer-Bio-and-pannels", icon: "fa-solid fa-gamepad", highlight: false, badge: "Novo", active: true, glowColor: "", type: "link", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_setup", title: "Setup Gamer & Equipamentos", subtitle: "Periféricos, microfone e peças do PC recomendadas", url: "https://amazon.com.br", icon: "fa-solid fa-headset", highlight: false, badge: "", active: true, glowColor: "", type: "link", syncLiveStatus: false, livePlatform: "auto" },
+        { id: "link_pix", title: "Mande uma mensagem / Pix", subtitle: "Apoie a produção de conteúdo do canal", url: "https://tipa.ai", icon: "fa-solid fa-qrcode", highlight: false, badge: "Apoio", active: true, glowColor: "", type: "link", syncLiveStatus: false, livePlatform: "auto" }
       ]
     };
 
@@ -712,41 +714,82 @@
 
     const ITEM_TYPES = {
       link: {
-        label: "Link / Botão / Banner",
+        label: "Link",
         defaultData: (id) => ({
           id: id || ("link_" + Date.now()),
           type: "link",
-          title: "Novo Link", url: "https://", icon: "fa-solid fa-link",
-          subtitle: "", badge: "", highlight: false, active: true, glowColor: "",
-          imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover",
+          title: "Novo Link",
+          url: "https://",
+          icon: "fa-solid fa-link",
+          subtitle: "",
+          badge: "",
+          highlight: false,
+          active: true,
+          glowColor: "",
+          syncLiveStatus: false,
+          livePlatform: "auto"
+        })
+      },
+      imagem: {
+        label: "Imagem",
+        defaultData: (id) => ({
+          id: id || ("img_" + Date.now()),
+          type: "imagem",
+          title: "Nova Imagem",
+          imageUrl: "",
+          url: "",
+          imageFit: "cover",
+          imageSize: "md",
+          imagePosition: "top",
           useFavicon: false,
-          content: "", textColor: "", textSize: "md", textAlign: "left",
-          syncLiveStatus: false, livePlatform: "auto"
+          highlight: false,
+          active: true,
+          glowColor: ""
         })
       },
       texto: {
-        label: "Texto / Markdown",
+        label: "Texto",
         defaultData: (id) => ({
           id: id || ("txt_" + Date.now()),
           type: "texto",
-          title: "Novo Texto", url: "", icon: "fa-solid fa-align-left",
-          subtitle: "", badge: "", highlight: false, active: true, glowColor: "",
-          imageUrl: "", imagePosition: "left", imageSize: "md", imageFit: "cover",
-          useFavicon: false,
-          content: "", textColor: "", textSize: "md", textAlign: "left",
-          syncLiveStatus: false, livePlatform: "auto"
+          title: "Novo Texto",
+          content: "> **Meu Setup**\n\n* **Placa Mãe:** [Gigabyte B760M](https://)\n* **Processador:** Intel i5",
+          textColor: "",
+          textSize: "md",
+          textAlign: "left",
+          active: true
         })
       },
       schedule: {
-        label: "Agenda de Lives & Countdown",
+        label: "Agenda",
         defaultData: (id) => ({
           id: id || ("sched_" + Date.now()),
           type: "schedule",
           title: "Cronograma de Lives",
           icon: "fa-solid fa-calendar-days",
-          highlight: false, active: true, glowColor: "",
+          highlight: false,
+          active: true,
+          glowColor: "",
           showCountdown: true,
           scheduleDays: SCHEDULE_DIAS_PADRAO()
+        })
+      },
+      lista: {
+        label: "Lista",
+        defaultData: (id) => ({
+          id: id || ("list_" + Date.now()),
+          type: "lista",
+          title: "Meu Setup",
+          icon: "fa-solid fa-list-check",
+          barColor: "",
+          highlight: false,
+          active: true,
+          glowColor: "",
+          items: [
+            { label: "Placa Mãe", value: "Gigabyte B760M Gaming AC", url: "" },
+            { label: "Processador", value: "Intel Core i5 14400F", url: "" },
+            { label: "Placa de Vídeo", value: "NVIDIA GeForce RTX 4060", url: "" }
+          ]
         })
       }
     };
@@ -879,6 +922,12 @@
       return null;
     }
 
+    // Só o tipo 'link' carrega os campos de sincronização de live (badge, subtítulo
+    // dinâmico e ids do export). Os demais tipos ignoram o recurso por completo.
+    function itemSuportaLive(item) {
+      return !!item && item.type === 'link';
+    }
+
     // Kick não possui ícone de marca no FontAwesome 6 Free -> usamos SVG inline.
     const KICK_ICON = "brand-kick";
 
@@ -902,7 +951,9 @@
       "fa-solid fa-bolt", "fa-solid fa-fire", "fa-solid fa-star",
       "fa-solid fa-envelope", "fa-solid fa-heart", "fa-solid fa-qrcode",
       "fa-solid fa-video", "fa-solid fa-code", "fa-solid fa-coffee",
-      "fa-solid fa-globe", "fa-solid fa-trophy", "fa-solid fa-desktop"
+      "fa-solid fa-globe", "fa-solid fa-trophy", "fa-solid fa-desktop",
+      "fa-solid fa-image", "fa-solid fa-list-check", "fa-solid fa-list-ul",
+      "fa-solid fa-microchip", "fa-solid fa-memory", "fa-solid fa-computer-mouse"
     ];
 
     function inicializar() {
@@ -1456,16 +1507,6 @@
       return (item && item.imageFit === 'contain') ? 'contain' : 'cover';
     }
 
-    // Miniatura lateral: 'contain' preserva a caixa quadrada (para não quebrar o alinhamento da linha),
-    // apenas deixa de cortar, mostrando a imagem inteira sobre um fundo suave.
-    function getImgClassesThumb(item, isMockup) {
-      const tam = getItemImageSize(item);
-      const base = isMockup ? tam.mockThumb : tam.thumb;
-      return getItemImageFit(item) === 'contain'
-        ? `${base} object-contain bg-black/30 flex-shrink-0 my-auto transition duration-200`
-        : `${base} object-cover flex-shrink-0 my-auto transition duration-200`;
-    }
-
     // Banner (top/bottom): 'cover' trava a altura e corta; 'contain' devolve altura
     // proporcional com teto, garantindo que a imagem inteira apareça sem cortar cabeças/textos.
     // No 'contain' o imageSize passa a mandar nas dimensões máximas (QR codes não viram pôsteres).
@@ -1524,6 +1565,8 @@
 
     // Raio efetivo do card: pílula pura deforma cards em coluna com imagem alta
     // (top/bottom vira elipse); nesses casos cai para cantos arredondados seguros.
+    // No modo pílula com imagem pequena (avatar, md, lg) a imagem fica dentro do
+    // quadrado/thumb, então o raio não corta o conteúdo.
     function raioEfetivoItem(item) {
       if (appConfig.buttonRadius !== 'rounded-full') return appConfig.buttonRadius || 'rounded-2xl';
       const pos = getItemImagePosition(item);
@@ -1647,17 +1690,6 @@
         let subtitleText = item.subtitle || '';
         if (linkIsLive && uptimePtBr) subtitleText = `🔴 Ao vivo agora há ${uptimePtBr}!`;
 
-        const temImagem = !!(item.imageUrl && item.imageUrl.trim());
-        const posicaoImg = getItemImagePosition(item);
-        const imgSrc = escapeHtml(resolverImagemDoItem(item));
-        const imgOriginal = escapeHtml(normalizarUrlImagem(item.imageUrl, ''));
-        const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
-
-        const midia = (tam) => {
-          if (!(temImagem && (posicaoImg === 'left' || posicaoImg === 'top' || posicaoImg === 'bottom'))) return null;
-          return `<img src="${imgSrc}" alt="" loading="lazy" ${fallback} class="${tam}">`;
-        };
-
         const blocoTexto = (isM) => `
           <div class="flex items-center justify-between flex-1 ${isM ? 'gap-2 min-w-0' : 'gap-3.5 min-w-0'}">
             <div class="${isM ? 'min-w-0 truncate flex-1' : 'min-w-0 flex-1'}">
@@ -1672,21 +1704,131 @@
             </div>
           </div>`;
 
-        const midiaHtml = temImagem
-          ? `<img src="${imgSrc}" alt="" loading="lazy" ${fallback} class="${posicaoImg === 'left' ? (isMockup ? getImgClassesThumb(item, true) : getImgClassesThumb(item, false)) : (isMockup ? getImgClassesBanner(item, true) : getImgClassesBanner(item, false))}">`
-          : `<div class="${isMockup ? `w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-purple-400')}` : `w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400 group-hover:text-purple-300 group-hover:bg-purple-600/30')} transition duration-200`}">${renderizarIcone(item.icon)}</div>`;
+        const midiaHtml = `<div class="${isMockup ? `w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-purple-400')}` : `w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg ${linkIsLive ? 'bg-red-600 text-white' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400 group-hover:text-purple-300 group-hover:bg-purple-600/30')} transition duration-200`}">${renderizarIcone(item.icon)}</div>`;
 
-        const layoutCol = temImagem && (posicaoImg === 'top' || posicaoImg === 'bottom');
-        const conteudo = layoutCol
-          ? `<div class="flex flex-col gap-0 w-full">${posicaoImg === 'bottom' ? blocoTexto(isMockup) + midiaHtml : midiaHtml + blocoTexto(isMockup)}</div>`
-          : `<div class="flex items-center ${isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2'} flex-1 w-full">${midiaHtml}${blocoTexto(isMockup)}</div>`;
+        const conteudo = `<div class="flex items-center ${isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2'} flex-1 w-full">${midiaHtml}${blocoTexto(isMockup)}</div>`;
 
-        return { conteudo, layoutCol, linkIsLive, item };
+        return { conteudo, layoutCol: false, linkIsLive, item };
+      },
+
+      // Card de imagem: a mídia é o conteúdo (sem botão/chevron). Os limites vêm
+      // de CONTAIN_SIZES quando o enquadramento é 'contain'; no 'cover' a caixa
+      // corta. Com URL preenchida, o card inteiro vira link.
+      imagem(item, isMockup) {
+        const temImg = !!(item.imageUrl && item.imageUrl.trim());
+        const cor = getItemGlowColor(item);
+        const rgb = hexToRgbTriplet(cor);
+        const fit = getItemImageFit(item);
+        const sz = ['sm', 'md', 'lg', 'banner'].includes(item.imageSize) ? item.imageSize : 'md';
+        const cs = CONTAIN_SIZES[sz] || CONTAIN_SIZES.md;
+        const src = escapeHtml(resolverImagemDoItem(item));
+        const imgOriginal = escapeHtml(normalizarUrlImagem(item.imageUrl, ''));
+        const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
+
+        // No mockup do celular tudo é reduzido pela metade para caber na moldura.
+        const fator = isMockup ? 0.5 : 1;
+        const maxH = Math.round(cs.maxH * fator);
+        const maxW = Math.round(cs.maxW * fator);
+
+        let imgClasses = 'block';
+        let imgStyle = '';
+        if (fit === 'contain') {
+          imgClasses += ' object-contain bg-black/30';
+          imgStyle = (sz === 'banner')
+            ? `width:100%;height:auto;max-height:${maxH}px;`
+            : `width:auto;height:auto;max-width:${maxW}px;max-height:${maxH}px;margin-left:auto;margin-right:auto;`;
+        } else {
+          imgClasses += ' object-cover';
+          if (sz === 'banner') imgClasses += ` w-full ${isMockup ? 'h-16' : 'h-32 sm:h-40'}`;
+          else imgStyle = `width:100%;height:${maxH}px;`;
+        }
+
+        const imgHtml = temImg
+          ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} class="${imgClasses}" style="${imgStyle}">`
+          : `<div class="w-full ${isMockup ? 'h-16' : 'h-32'} flex items-center justify-center text-zinc-600 bg-zinc-900/60" style="font-size:${isMockup ? '14px' : '22px'};">${renderizarIcone('fa-solid fa-image')}</div>`;
+
+        // Tamanhos grandes viram faixa full-width e mantêm a legenda embaixo;
+        // nos demais a imagem entra no quadradinho da esquerda, igual aos
+        // outros cards (ícone + título + subtítulo + chevron).
+        const isFaixa = (sz === 'banner') || (sz === 'lg' && fit === 'cover');
+        const posImg = item.imagePosition === 'bottom' ? 'bottom' : 'top';
+
+        let midiaHtml, legenda = '';
+        if (isFaixa) {
+          legenda = item.title
+            ? `<div class="${isMockup ? 'px-2 py-1 text-[9px]' : 'px-3 py-2 text-[11px]'} text-center font-medium text-zinc-300 truncate">${escapeHtml(item.title)}</div>`
+            : '';
+          midiaHtml = imgHtml;
+        } else {
+          const tam = isMockup ? 'w-7 h-7 rounded-lg text-xs' : 'w-10 h-10 rounded-xl text-lg';
+          const fundo = temImg ? 'bg-zinc-800/80 overflow-hidden' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400');
+          const midiaConteudo = temImg
+            ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} class="w-full h-full object-cover">`
+            : renderizarIcone('fa-solid fa-image');
+          const gap = isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2';
+          midiaHtml = `<div class="flex items-center ${gap} flex-1 w-full"><div class="${tam} flex-shrink-0 flex items-center justify-center ${fundo}">${midiaConteudo}</div><div class="min-w-0 flex-1"><div class="flex items-center gap-2"><span class="font-bold ${isMockup ? 'text-xs text-zinc-100 truncate' : 'text-sm text-zinc-100 truncate'}">${escapeHtml(item.title || '')}</span></div>${item.subtitle ? `<p class="${isMockup ? 'text-[10px]' : 'text-xs'} text-zinc-400 truncate mt-0.5">${escapeHtml(item.subtitle)}</p>` : ''}</div><div class="flex-shrink-0 ml-auto text-zinc-500 transition duration-200 pl-2"><i class="fa-solid fa-chevron-right ${isMockup ? 'text-[10px]' : 'text-xs'}"></i></div></div>`;
+        }
+
+        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item);
+        // A faixa usa a imagem encostada nas bordas; no formato linha o padding vem
+        // daqui porque getEstiloBotaoInline só cuida de raio/fundo/borda/sombra.
+        const padding = isFaixa ? '' : (isMockup ? 'padding:10px;' : 'padding:16px;');
+        const card = `<div class="w-full ${isFaixa ? 'overflow-hidden' : ''} ${item.highlight ? 'animate-pulse-glow' : ''}" style="${estiloCard} ${padding} --glow-rgb: ${rgb};">${posImg === 'bottom' ? `${legenda}${midiaHtml}` : `${midiaHtml}${legenda}`}</div>`;
+
+        const destino = (item.url || '').trim();
+        if (!destino) return { html: card };
+        return {
+          html: `<a href="${escapeHtml(destino)}" target="_blank" rel="noopener noreferrer" class="block w-full transition duration-200 hover:-translate-y-0.5 hover:opacity-95">${card}</a>`
+        };
       },
 
       texto(item) {
         return {
           html: `<div class="${getClasseBlocoTexto(item.textSize, item.textAlign)}">${markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' })}</div>`
+        };
+      },
+
+      // Card de lista (estilo painel da Twitch): barra vertical colorida à esquerda
+      // do cabeçalho e marcadores circulares em cada linha. Acompanha o tema
+      // (buttonStyle/buttonRadius) e o glow do item.
+      lista(item, isMockup) {
+        const cor = getItemGlowColor(item);
+        const rgb = hexToRgbTriplet(cor);
+        const barra = (item.barColor && item.barColor.trim()) || appConfig.primaryColor || '#9146FF';
+        const linhas = Array.isArray(item.items) ? item.items : [];
+        const fator = isMockup ? 0.5 : 1;
+
+        const linhaHtml = (l) => {
+          const rotulo = (l && l.label) ? String(l.label).trim() : '';
+          const valor = (l && l.value) ? String(l.value) : '';
+          const destino = (l && l.url) ? String(l.url).trim() : '';
+          const corpo = destino
+            ? `<a href="${escapeHtml(destino)}" target="_blank" rel="noopener noreferrer" class="underline decoration-dotted underline-offset-2 hover:text-white transition" style="color:${escapeHtml(barra)};">${escapeHtml(valor)}</a>`
+            : escapeHtml(valor);
+          return `<li class="flex items-start gap-1.5 ${isMockup ? 'text-[8px]' : 'text-[11px]'} leading-snug">
+            <span class="shrink-0 mt-[2px]" style="color:${escapeHtml(barra)};">•</span>
+            <span class="min-w-0 break-words text-zinc-300">${rotulo ? `<strong class="text-zinc-100">${escapeHtml(rotulo)}:</strong> ` : ''}${corpo}</span>
+          </li>`;
+        };
+
+        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item);
+        const vidro = (appConfig.buttonStyle === 'glass' && appConfig.bgType && appConfig.bgType !== 'solid')
+          ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
+
+        return {
+          html: `
+          <div class="w-full overflow-hidden ${item.highlight ? 'animate-pulse-glow' : ''}" style="${estiloCard} --glow-rgb: ${rgb}; ${vidro}">
+            <div class="flex items-stretch">
+              <span class="shrink-0" style="width:${isMockup ? 3 : 4}px;background:${escapeHtml(barra)};"></span>
+              <div class="min-w-0 flex-1 ${isMockup ? 'px-2 py-1.5' : 'px-3.5 py-3'}">
+                <div class="flex items-center gap-2 ${isMockup ? 'mb-1' : 'mb-2'}">
+                  <span class="${isMockup ? 'text-[10px]' : 'text-sm'}" style="color:${escapeHtml(barra)};">${renderizarIcone(item.icon)}</span>
+                  <span class="${isMockup ? 'text-[10px]' : 'text-sm'} font-bold text-white truncate">${escapeHtml(item.title)}</span>
+                </div>
+                <ul class="flex flex-col ${isMockup ? 'gap-0.5' : 'gap-1'}">${linhas.map(linhaHtml).join('')}</ul>
+              </div>
+            </div>
+          </div>`
         };
       },
 
@@ -1753,10 +1895,13 @@
           ? `border: 2px solid ${cor}; box-shadow: 0 0 20px rgba(${rgb}, 0.55);`
           : `border: 1px solid #27272a; box-shadow: 0 10px 15px -3px rgba(0,0,0,.4);`;
         const vidro = (appConfig.buttonStyle === 'glass' && appConfig.bgType && appConfig.bgType !== 'solid') ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
+        // Card de cronograma é sempre retangular, então pílula pura viraria
+        // elipse; segue o tema com um passo mais seguro nesse caso.
+        const raioCard = appConfig.buttonRadius === 'rounded-full' ? 'rounded-3xl' : (appConfig.buttonRadius || 'rounded-3xl');
 
         return {
           html: `
-          <div data-countdown-wrap="${isMockup ? 'mock_' : ''}${item.id}" class="w-full ${isMockup ? 'p-2.5' : 'p-4'} rounded-2xl flex flex-col gap-2 ${item.highlight ? 'animate-pulse-glow' : ''}" style="background: rgba(24,24,27,.72); ${estiloCard} ${vidro} --glow-rgb: ${rgb};">
+          <div data-countdown-wrap="${isMockup ? 'mock_' : ''}${item.id}" class="w-full ${isMockup ? 'p-2.5' : 'p-4'} ${raioCard} flex flex-col gap-2 ${item.highlight ? 'animate-pulse-glow' : ''}" style="background: rgba(24,24,27,.72); ${estiloCard} ${vidro} --glow-rgb: ${rgb};">
             <div class="flex items-center gap-2">
               <span class="${isMockup ? 'text-xs' : 'text-sm'}" style="color:${cor};">${renderizarIcone(item.icon)}</span>
               <span class="${isMockup ? 'text-xs' : 'text-sm'} font-bold text-white truncate">${escapeHtml(item.title)}</span>
@@ -1880,13 +2025,20 @@
                 <option value="youtube" ${item.livePlatform === 'youtube' ? 'selected' : ''}>YouTube (indisponível)</option>
               </select>
             </div>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-            <div class="sm:col-span-3 flex items-center gap-2"><label class="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" ${item.useFavicon ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'useFavicon', this.checked)" class="w-3.5 h-3.5 accent-purple-600"><span class="text-[11px] font-medium text-zinc-300">Usar favicon</span></label><span title="Ative para transformar URLs de sites, como twitch.tv ou github.com, no favicon do domínio. Desative para tentar carregar a URL original como imagem." class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-zinc-600 text-[10px] text-zinc-400 cursor-help">?</span></div>
-            <div class="sm:col-span-3"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem (opcional)</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div class="sm:col-span-1"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="left" ${(item.imagePosition || 'left') === 'left' ? 'selected' : ''}>Miniatura à Esquerda</option><option value="top" ${item.imagePosition === 'top' ? 'selected' : ''}>Banner Acima</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Banner Abaixo</option></select></div>
-            <div class="sm:col-span-1"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Enquadramento da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageFit', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="cover" ${(!item.imageFit || item.imageFit === 'cover') ? 'selected' : ''}>Preencher / Cortar</option><option value="contain" ${item.imageFit === 'contain' ? 'selected' : ''}>Inteira / Sem Cortar</option></select></div>
-            <div class="sm:col-span-1"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="sm" ${item.imageSize === 'sm' ? 'selected' : ''}>Pequeno</option><option value="md" ${(!item.imageSize || item.imageSize === 'md') ? 'selected' : ''}>Médio</option><option value="lg" ${item.imageSize === 'lg' ? 'selected' : ''}>Destaque</option><option value="banner" ${item.imageSize === 'banner' ? 'selected' : ''}>Banner Grande</option></select></div>
+          </div>`;
+      },
+
+      imagem(item, index) {
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título / Legenda</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Subtítulo (Opcional)</label><input type="text" value="${escapeHtml(item.subtitle || '')}" oninput="atualizarLinkCampo(${index}, 'subtitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL / Caminho da Imagem</label><input type="text" value="${escapeHtml(item.imageUrl || '')}" oninput="atualizarLinkCampo(${index}, 'imageUrl', this.value)" placeholder="https://... ou banners/capa.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div class="sm:col-span-2 flex items-center gap-2"><label class="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" ${item.useFavicon ? 'checked' : ''} onchange="atualizarLinkCampo(${index}, 'useFavicon', this.checked)" class="w-3.5 h-3.5 accent-purple-600"><span class="text-[11px] font-medium text-zinc-300">Usar favicon do domínio</span></label><span title="Ative para transformar URLs de sites, como twitch.tv ou github.com, no favicon do domínio. Desative para tentar carregar a URL original como imagem." class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-zinc-600 text-[10px] text-zinc-400 cursor-help">?</span></div>
+            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino ao Clicar (opcional)</label><input type="text" value="${escapeHtml(item.url || '')}" oninput="atualizarLinkCampo(${index}, 'url', this.value)" placeholder="https://..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Posição da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imagePosition', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="top" ${(!item.imagePosition || item.imagePosition === 'top') ? 'selected' : ''}>Em cima (imagem acima da legenda)</option><option value="bottom" ${item.imagePosition === 'bottom' ? 'selected' : ''}>Embaixo (imagem abaixo da legenda)</option></select></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Enquadramento</label><select onchange="atualizarLinkCampo(${index}, 'imageFit', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="cover" ${(!item.imageFit || item.imageFit === 'cover') ? 'selected' : ''}>Preencher / Cortar</option><option value="contain" ${item.imageFit === 'contain' ? 'selected' : ''}>Inteira / Sem Cortar</option></select></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Tamanho da Imagem</label><select onchange="atualizarLinkCampo(${index}, 'imageSize', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"><option value="sm" ${item.imageSize === 'sm' ? 'selected' : ''}>Pequeno</option><option value="md" ${(!item.imageSize || item.imageSize === 'md') ? 'selected' : ''}>Médio</option><option value="lg" ${item.imageSize === 'lg' ? 'selected' : ''}>Destaque</option><option value="banner" ${item.imageSize === 'banner' ? 'selected' : ''}>Banner Grande</option></select></div>
           </div>`;
       },
 
@@ -1952,6 +2104,32 @@
               ${dias.map(linhaDia).join('')}
             </div>
             <p class="text-[10px] text-zinc-500 mt-1.5">Ative os dias com live, defina horários e temas. O dia atual ganha destaque na página pública.</p>
+          </div>`;
+      },
+
+      lista(item, index) {
+        const linhas = Array.isArray(item.items) ? item.items : [];
+        const linhaHtml = (l, li) => `
+          <div class="flex items-center gap-1.5 bg-zinc-900/70 border border-zinc-800 rounded-lg px-2 py-1.5">
+            <input type="text" value="${escapeHtml(l.label || '')}" oninput="atualizarItemLista(${index}, ${li}, 'label', this.value)" placeholder="Rótulo (ex: Processador)" class="w-28 shrink-0 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-[11px] text-white focus:outline-none focus:border-purple-500" title="Rótulo da linha">
+            <input type="text" value="${escapeHtml(l.value || '')}" oninput="atualizarItemLista(${index}, ${li}, 'value', this.value)" placeholder="Descrição (ex: Intel Core i5)" class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-[11px] text-white focus:outline-none focus:border-purple-500" title="Descrição da linha">
+            <input type="text" value="${escapeHtml(l.url || '')}" oninput="atualizarItemLista(${index}, ${li}, 'url', this.value)" placeholder="Link (opcional)" class="w-32 shrink-0 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-[11px] text-white focus:outline-none focus:border-purple-500" title="Link opcional da linha">
+            <button onclick="removerItemLista(${index}, ${li})" title="Remover linha" class="p-1 text-zinc-500 hover:text-red-400 rounded hover:bg-red-950/30 transition shrink-0"><i class="fa-solid fa-trash-can text-xs"></i></button>
+          </div>`;
+        return `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título da Lista</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Cor da Barra Vertical</label><div class="flex items-center gap-2">
+              <input type="color" value="${escapeHtml(item.barColor || appConfig.primaryColor || '#9146FF')}" oninput="atualizarLinkCampo(${index}, 'barColor', this.value)" class="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0 shrink-0">
+              <button onclick="atualizarLinkCampo(${index}, 'barColor', '')" class="px-2 py-1.5 text-[11px] bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-300 hover:border-purple-500 transition shrink-0">Usar cor principal</button>
+            </div></div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-[11px] font-medium text-zinc-400 mb-1.5">Linhas da Lista</label>
+            <div class="flex flex-col gap-1.5">
+              ${linhas.map(linhaHtml).join('')}
+            </div>
+            <button onclick="adicionarItemLista(${index})" class="mt-2 px-3 py-1.5 text-[11px] bg-zinc-800 hover:bg-purple-600 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Adicionar Linha</button>
           </div>`;
       }
     };
@@ -2047,14 +2225,30 @@
         const opcoesTipo = Object.entries(ITEM_TYPES)
           .map(([chave, def]) => `<option value="${chave}" ${item.type === chave ? 'selected' : ''}>${def.label}</option>`)
           .join('');
+        // Ícones que o item realmente carrega. 'imagem' e 'texto' não têm campo
+        // de ícone: o botão vira um selo estático do tipo, sem abrir o modal.
+        const ICONE_POR_TIPO = {
+          link: 'fa-solid fa-link',
+          imagem: 'fa-solid fa-image',
+          texto: 'fa-solid fa-align-left',
+          schedule: 'fa-solid fa-calendar-days',
+          lista: 'fa-solid fa-list-check'
+        };
+        const tipoDef = ITEM_TYPES[item.type] || ITEM_TYPES.link;
+        const temIconeEditavel = item.type !== 'imagem' && item.type !== 'texto';
+        const iconeCard = temIconeEditavel
+          ? renderizarIcone(item.icon || ICONE_POR_TIPO[item.type])
+          : renderizarIcone(ICONE_POR_TIPO[item.type] || 'fa-solid fa-cube');
+        const botaoIcone = temIconeEditavel
+          ? `<button onclick="abrirModalIcone('link', '${escapeHtml(item.id)}')" title="Trocar Ícone" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-purple-600 hover:text-white text-purple-400 flex items-center justify-center text-sm transition border border-zinc-700">${iconeCard}</button>`
+          : `<span title="${escapeHtml(tipoDef.label)}" class="w-8 h-8 rounded-lg bg-zinc-900 text-zinc-500 flex items-center justify-center text-sm border border-zinc-800 cursor-default">${iconeCard}</span>`;
         card.innerHTML = `
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-zinc-800/80 pb-2.5">
-            <div class="flex items-center gap-2">
-              <button onclick="abrirModalIcone('link', '${escapeHtml(item.id)}')" title="Trocar Ícone" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-purple-600 hover:text-white text-purple-400 flex items-center justify-center text-sm transition border border-zinc-700">
-                ${renderizarIcone(item.icon)}
-              </button>
+            <div class="flex items-center gap-2 min-w-0">
+              ${botaoIcone}
               <span class="text-xs font-bold text-white tracking-wide truncate max-w-[200px]">${escapeHtml(item.title || 'Novo Item')}</span>
-              ${item.highlight ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-mono uppercase">Destaque</span>` : ''}
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono uppercase shrink-0">${escapeHtml(tipoDef.label)}</span>
+              ${item.highlight ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-600 text-white font-mono uppercase shrink-0">Destaque</span>` : ''}
             </div>
             <div class="flex items-center gap-1.5 self-end sm:self-auto">
               <button onclick="moverLink(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30 p-1.5 text-zinc-500"' : 'class="p-1.5 text-zinc-400 hover:text-white rounded hover:bg-zinc-800 transition"'}><i class="fa-solid fa-arrow-up text-xs"></i></button>
@@ -2122,6 +2316,36 @@
       dispararAtualizacaoGeral();
     }
 
+    // Atualiza um campo de uma linha da lista sem reconstruir o formulário (preserva foco).
+    function atualizarItemLista(index, linhaIndex, campo, valor) {
+      const item = appConfig.links[index];
+      if (!item || !Array.isArray(item.items)) return;
+      const linha = item.items[linhaIndex];
+      if (!linha) return;
+      linha[campo] = valor;
+      salvarConfiguracao();
+      dispararAtualizacaoGeral();
+    }
+
+    function removerItemLista(index, linhaIndex) {
+      const item = appConfig.links[index];
+      if (!item || !Array.isArray(item.items)) return;
+      item.items.splice(linhaIndex, 1);
+      salvarConfiguracao();
+      renderizarListaLinksAdmin();
+      dispararAtualizacaoGeral();
+    }
+
+    function adicionarItemLista(index) {
+      const item = appConfig.links[index];
+      if (!item) return;
+      if (!Array.isArray(item.items)) item.items = [];
+      item.items.push({ label: "", value: "", url: "" });
+      salvarConfiguracao();
+      renderizarListaLinksAdmin();
+      dispararAtualizacaoGeral();
+    }
+
     // Atualiza os blocos de countdown de todos os itens schedule visíveis.
     // Um único setInterval para todos, sem reconstruir o DOM.
     let countdownIntervalId = null;
@@ -2170,7 +2394,14 @@
       salvarConfiguracao();
       renderizarListaLinksAdmin();
       dispararAtualizacaoGeral();
-      mostrarToast(t === 'schedule' ? 'Agenda de Lives adicionada!' : t === 'texto' ? 'Bloco de texto adicionado!' : 'Link adicionado!');
+      const avisos = {
+        link: 'Link adicionado!',
+        imagem: 'Imagem adicionada!',
+        texto: 'Bloco de texto adicionado!',
+        schedule: 'Agenda de Lives adicionada!',
+        lista: 'Lista adicionada!'
+      };
+      mostrarToast(avisos[t] || 'Item adicionado!');
     }
 
     function atualizarLinkCampo(index, campo, valor) {
@@ -2206,13 +2437,45 @@
           item.scheduleDays[1].lives = [{ time: "19:00", info: "Gameplay" }];
         }
         if (!item.icon) item.icon = 'fa-solid fa-calendar-days';
+      } else if (novoTipo === 'lista') {
+        if (!Array.isArray(item.items) || !item.items.length) {
+          item.items = [
+            { label: "Placa Mãe", value: "Gigabyte B760M Gaming AC", url: "" },
+            { label: "Processador", value: "Intel Core i5 14400F", url: "" },
+            { label: "Placa de Vídeo", value: "NVIDIA GeForce RTX 4060", url: "" }
+          ];
+        }
+        item.items = item.items
+          .filter(l => l && typeof l === 'object')
+          .map(l => ({
+            label: typeof l.label === 'string' ? l.label : '',
+            value: typeof l.value === 'string' ? l.value : '',
+            url: typeof l.url === 'string' ? l.url : ''
+          }));
+        if (!item.icon || item.icon === 'fa-solid fa-link') item.icon = 'fa-solid fa-list-check';
+        if (!('barColor' in item)) item.barColor = "";
+      } else if (novoTipo === 'imagem') {
+        item.imageSize = item.imageSize || 'md';
+        item.imageFit = item.imageFit || 'cover';
+        item.useFavicon = item.useFavicon === true;
+        if (typeof item.imageUrl !== 'string') item.imageUrl = "";
+        if (!item.url) item.url = "";
+        // Campos que só existem em 'link' não devem seguir viagem para o card de imagem.
+        delete item.badge;
+        delete item.subtitle;
+        delete item.syncLiveStatus;
+        delete item.livePlatform;
       } else {
-        item.imagePosition = item.imagePosition || 'left';
+        // 'link': apenas botão de navegação — nenhum campo de imagem/banner.
         item.imageSize = item.imageSize || 'md';
         item.imageFit = item.imageFit || 'cover';
         item.useFavicon = item.useFavicon === true;
         if (!item.url) item.url = 'https://';
         if (!item.icon) item.icon = 'fa-solid fa-link';
+        if (typeof item.subtitle !== 'string') item.subtitle = "";
+        if (typeof item.badge !== 'string') item.badge = "";
+        if (typeof item.syncLiveStatus !== 'boolean') item.syncLiveStatus = false;
+        if (!PLATAFORMAS_LIVE_OPCOES.includes(item.livePlatform)) item.livePlatform = 'auto';
       }
       salvarConfiguracao();
       renderizarListaLinksAdmin();
@@ -2287,16 +2550,43 @@
         if (!('glowColor' in item)) item.glowColor = "";
         if (!('imageUrl' in item)) item.imageUrl = "";
         item.useFavicon = item.useFavicon === true;
-        if (!['left', 'top', 'bottom'].includes(item.imagePosition)) item.imagePosition = 'left';
+        if (item.type === 'imagem') {
+          if (!['top', 'bottom'].includes(item.imagePosition)) item.imagePosition = 'top';
+        } else if (!['left', 'top', 'bottom'].includes(item.imagePosition)) item.imagePosition = 'left';
         if (!['sm', 'md', 'lg', 'banner'].includes(item.imageSize)) item.imageSize = 'md';
         if (!['cover', 'contain'].includes(item.imageFit)) item.imageFit = 'cover';
-        if (!['link', 'texto', 'schedule'].includes(item.type)) item.type = 'link';
+        if (!['link', 'imagem', 'texto', 'schedule', 'lista'].includes(item.type)) item.type = 'link';
         if (typeof item.content !== 'string') item.content = "";
         if (typeof item.textColor !== 'string' || (item.textColor && !/^#[0-9a-f]{6}$/i.test(item.textColor))) item.textColor = "";
         if (!['sm', 'md', 'lg'].includes(item.textSize)) item.textSize = 'md';
         if (!['left', 'center'].includes(item.textAlign)) item.textAlign = 'left';
         if (typeof item.syncLiveStatus !== 'boolean') item.syncLiveStatus = false;
         if (!PLATAFORMAS_LIVE_OPCOES.includes(item.livePlatform)) item.livePlatform = 'auto';
+        if (!('barColor' in item)) item.barColor = "";
+        else if (item.barColor && !/^#[0-9a-f]{6}$/i.test(item.barColor)) item.barColor = "";
+
+        // Compatibilidade: itens criados quando 'link' ainda carregava banner
+        // (imagePosition top/bottom + imageUrl) migram para o tipo 'imagem',
+        // preservando o visual. Só a miniatura lateral continua em 'link'.
+        if (item.type === 'link' && item.imageUrl && item.imageUrl.trim()
+            && (item.imagePosition === 'top' || item.imagePosition === 'bottom')) {
+          item.type = 'imagem';
+          item.url = item.url && item.url !== 'https://' ? item.url : "";
+          delete item.imagePosition;
+          delete item.badge;
+          delete item.subtitle;
+          delete item.syncLiveStatus;
+          delete item.livePlatform;
+        }
+        // Campos exclusivos do tipo 'link': um item migrado para imagem não deve
+        // continuar com resíduos de live/badge.
+        if (item.type !== 'link') {
+          delete item.badge;
+          delete item.subtitle;
+          delete item.syncLiveStatus;
+          delete item.livePlatform;
+        }
+
         // Retrocompatibilidade: item schedule sem grade completa recebe o padrão.
         if (item.type === 'schedule') {
           if (typeof item.showCountdown !== 'boolean') item.showCountdown = true;
@@ -2318,6 +2608,21 @@
               item.scheduleDays[1].lives = [{ time: "19:00", info: "Gameplay" }];
             }
           }
+          if (!item.icon) item.icon = 'fa-solid fa-calendar-days';
+        }
+
+        // Item lista: cada linha é { label, value, url } — nunca deixa passar
+        // entrada inválida (null, string solta) que quebraria o render.
+        if (item.type === 'lista') {
+          if (!Array.isArray(item.items)) item.items = [];
+          item.items = item.items
+            .filter(l => l && typeof l === 'object')
+            .map(l => ({
+              label: typeof l.label === 'string' ? l.label : '',
+              value: typeof l.value === 'string' ? l.value : '',
+              url: typeof l.url === 'string' ? l.url : ''
+            }));
+          if (!item.icon) item.icon = 'fa-solid fa-list-check';
         }
       });
       return c;
@@ -2531,7 +2836,7 @@
       if (!appConfig.autoDetectLive) return;
 
       const alvos = (appConfig.links || [])
-        .filter(item => item.active && item.type !== 'texto' && item.syncLiveStatus)
+        .filter(item => item.active && itemSuportaLive(item) && item.syncLiveStatus)
         .map(item => ({ item, alvo: resolverPlataformaLive(item) }))
         .filter(x => x.alvo && x.alvo.config.url && x.alvo.identificador);
 
@@ -2701,7 +3006,7 @@
     // `syncLiveStatus` ligado E plataforma com endpoint público disponível.
     function exportAlvosLive(cfg, canalPrincipal) {
       return (cfg.links || [])
-        .filter(l => l.active && l.type !== 'texto' && l.syncLiveStatus)
+        .filter(l => l.active && itemSuportaLive(l) && l.syncLiveStatus)
         .map(l => {
           const alvo = resolverPlataformaLive(l);
           if (!alvo || !alvo.config.url || !alvo.identificador) return null;
@@ -2721,7 +3026,9 @@
         .filter(Boolean);
     }
 
-    // Export de um item tipo link: HTML com estilo inline (sem Tailwind).
+    // Export de um item tipo link: botão compacto com ícone à esquerda, texto e
+    // chevron fixo na ponta direita. Sem campos de imagem — isso é papel do tipo
+    // 'imagem'. HTML com estilo inline (o arquivo exportado não tem Tailwind).
     function renderizarLinkExport(l, cfg) {
       const alvoLive = l.syncLiveStatus ? resolverPlataformaLive(l) : null;
       const monitoraLive = !!(alvoLive && alvoLive.config.url);
@@ -2735,50 +3042,130 @@
       const glowRgb = hexToRgbTriplet(glowCor);
       const glowVar = isHl ? `--glow-rgb: ${glowRgb}; ` : '';
 
-      const temImg = !!(l.imageUrl && l.imageUrl.trim());
-      const posImg = getItemImagePosition(l);
-      const fit = getItemImageFit(l);
-      const imgSite = escapeHtml(resolverImagemDoItem(l));
-      const imgOriginal = escapeHtml(normalizarUrlImagem(l.imageUrl, ''));
-      const fitSite = fit === 'contain' ? getImgEstiloBannerContido(l) : getImgEstiloBanner(150);
-      const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
-      let midiaHtml;
-      if (temImg && (posImg === 'top' || posImg === 'bottom')) {
-        midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${fitSite}">`;
-      } else if (temImg && posImg === 'left') {
-        midiaHtml = `<img src="${imgSite}" alt="" loading="lazy" ${fallback} style="${getImgEstiloThumb(l)}">`;
-      } else {
-        midiaHtml = `<div${attrLive('liveIcon', liveIconId)} style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
-      }
+      const iconeHtml = `<div${attrLive('liveIcon', liveIconId)} style="width: 40px; height: 40px; border-radius: 12px; background: ${isHl ? glowCor : '#27272a'}; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">${renderizarIcone(l.icon)}</div>`;
 
-      const blocoTexto = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; min-width: 0;">
-                <div style="min-width: 0; text-align: left;">
-                  <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
-                  <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
-                </div>
-                <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>
-              </div>`;
-
-      const layoutCol = temImg && (posImg === 'top' || posImg === 'bottom');
-      const conteudo = layoutCol
-        ? `<div style="display: flex; flex-direction: column; width: 100%;">
-              ${posImg === 'bottom' ? blocoTexto + midiaHtml : midiaHtml + blocoTexto}
-            </div>`
-        : `<div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
-              ${midiaHtml}
-              <div style="min-width: 0; text-align: left;">
-                <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${l.badge ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>` : ''}</span></div>
-                <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
-              </div>
-            </div>
-            <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0;"><i class="fa-solid fa-chevron-right"></i></div>`;
-
-      const cardFlex = layoutCol ? 'flex-direction: column; align-items: stretch; padding: 0; overflow: hidden;' : '';
+      const badgeHtml = l.badge
+        ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>`
+        : '';
 
       return `
-      <a${attrLive('liveBtn', liveBtnId)} href="${l.url}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor, l)} text-decoration: none; transition: transform 0.2s, border-color 0.2s; ${cardFlex}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-        ${conteudo}
+      <a${attrLive('liveBtn', liveBtnId)} href="${escapeHtml(l.url || '#')}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor, l)} text-decoration: none; transition: transform 0.2s, border-color 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
+          ${iconeHtml}
+          <div style="min-width: 0; text-align: left;">
+            <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(l.title)} <span${attrLive('liveBadge', liveBadgeId)}>${badgeHtml}</span></div>
+            <div${attrLive('liveSub', liveSubId)} style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${escapeHtml(l.subtitle || '')}</div>
+          </div>
+        </div>
+        <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0; margin-left: auto;"><i class="fa-solid fa-chevron-right"></i></div>
       </a>`;
+    }
+
+    // Export de um item tipo imagem: card com a mídia (limites de CONTAIN_SIZES
+    // quando 'contain'; caixa cortada quando 'cover') e legenda opcional.
+    function renderizarImagemExport(item, cfg) {
+      const cor = (item.glowColor && item.glowColor.trim()) || cfg.primaryColor || '#9146FF';
+      const rgb = hexToRgbTriplet(cor);
+      const isHl = !!item.highlight;
+      const glowVar = isHl ? `--glow-rgb: ${rgb}; ` : '';
+      const fit = item.imageFit === 'contain' ? 'contain' : 'cover';
+      const sz = ['sm', 'md', 'lg', 'banner'].includes(item.imageSize) ? item.imageSize : 'md';
+      const cs = CONTAIN_SIZES[sz] || CONTAIN_SIZES.md;
+      const src = escapeHtml(resolverImagemDoItem(item));
+      const imgOriginal = escapeHtml(normalizarUrlImagem(item.imageUrl, ''));
+      const fallback = `data-original-src="${imgOriginal}" onerror="if(this.dataset.fallback !== '1' && this.dataset.originalSrc && this.src !== this.dataset.originalSrc){this.dataset.fallback='1';this.src=this.dataset.originalSrc;}else{this.style.display='none'}"`;
+
+      const temImg = !!(item.imageUrl && item.imageUrl.trim());
+      let imgStyle, imgHtml;
+      if (fit === 'contain') {
+        imgStyle = (sz === 'banner')
+          ? `width:100%;height:auto;max-height:${cs.maxH}px;object-fit:contain;background:rgba(0,0,0,.3);display:block;`
+          : `width:auto;height:auto;max-width:${cs.maxW}px;max-height:${cs.maxH}px;object-fit:contain;background:rgba(0,0,0,.3);display:block;margin-left:auto;margin-right:auto;`;
+      } else {
+        imgStyle = (sz === 'banner')
+          ? `width:100%;height:200px;object-fit:cover;display:block;`
+          : `width:100%;height:${cs.maxH}px;object-fit:cover;display:block;`;
+      }
+      imgHtml = temImg
+        ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} style="${imgStyle}">`
+        : `<div style="width:100%;height:160px;display:flex;align-items:center;justify-content:center;color:#52525b;background:rgba(24,24,27,.6);font-size:22px;">${renderizarIcone('fa-solid fa-image')}</div>`;
+
+      // Faixa full-width nos tamanhos grandes (legenda centralizada embaixo);
+      // nos demais entra no quadradinho de 40px, igual aos outros cards.
+      const isFaixa = (sz === 'banner') || (sz === 'lg' && fit === 'cover');
+
+      let midiaHtml, legenda = '';
+      if (isFaixa) {
+        legenda = item.title
+          ? `<div style="padding:8px 12px;text-align:center;font-size:11px;font-weight:500;color:#d4d4d8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</div>`
+          : '';
+        midiaHtml = imgHtml;
+      } else {
+        const thumbConteudo = temImg
+          ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} style="width:100%;height:100%;object-fit:cover;display:block;">`
+          : `<span style="font-size:16px;">${renderizarIcone('fa-solid fa-image')}</span>`;
+        const thumbFundo = temImg
+          ? 'background:rgba(39,39,42,.8);overflow:hidden;'
+          : (isHl ? 'background:#9333ea;color:#fff;' : 'background:rgba(39,39,42,.8);color:#c084fc;');
+        const subtitulo = item.subtitle
+          ? `<div style="font-size:12px;color:#a1a1aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${escapeHtml(item.subtitle)}</div>`
+          : '';
+        midiaHtml = `<div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1;width:100%;padding-right:8px;">
+            <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:16px;${thumbFundo}">${thumbConteudo}</div>
+            <div style="min-width:0;flex:1;">
+              <div style="font-size:14px;font-weight:700;color:#f4f4f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title || '')}</div>
+              ${subtitulo}
+            </div>
+            <div style="flex-shrink:0;margin-left:auto;color:#71717a;padding-left:8px;"><i class="fa-solid fa-chevron-right" style="font-size:12px;"></i></div>
+          </div>`;
+      }
+
+      const posImg = item.imagePosition === 'bottom' ? 'bottom' : 'top';
+      const padding = isFaixa ? '' : 'padding:16px;';
+      const card = `<div class="${isHl ? 'glow-item' : ''}" style="${glowVar}width:100%;${isFaixa ? 'overflow:hidden;' : ''}${padding}${getEstiloBotaoInline(isHl, cor, item)}">${posImg === 'bottom' ? `${legenda}${midiaHtml}` : `${midiaHtml}${legenda}`}</div>`;
+      const destino = (item.url || '').trim();
+      if (!destino) return card;
+      return `<a href="${escapeHtml(destino)}" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;text-decoration:none;transition:transform .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">${card}</a>`;
+    }
+
+    // Export de um item tipo lista: card com barra vertical colorida no cabeçalho
+    // e linhas com marcador circular. Linha com URL vira link em nova aba.
+    function renderizarListaExport(item, cfg) {
+      const cor = (item.glowColor && item.glowColor.trim()) || cfg.primaryColor || '#9146FF';
+      const rgb = hexToRgbTriplet(cor);
+      const isHl = !!item.highlight;
+      const glowVar = isHl ? `--glow-rgb: ${rgb}; ` : '';
+      const barra = (item.barColor && item.barColor.trim()) || cfg.primaryColor || '#9146FF';
+      const linhas = Array.isArray(item.items) ? item.items : [];
+      const vidro = (cfg.buttonStyle === 'glass' && cfg.bgType && cfg.bgType !== 'solid')
+        ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
+
+      const linhaHtml = (l) => {
+        const rotulo = (l && l.label) ? String(l.label).trim() : '';
+        const valor = (l && l.value) ? String(l.value) : '';
+        const destino = (l && l.url) ? String(l.url).trim() : '';
+        const corpo = destino
+          ? `<a href="${escapeHtml(destino)}" target="_blank" rel="noopener noreferrer" style="color:${escapeHtml(barra)};text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;">${escapeHtml(valor)}</a>`
+          : escapeHtml(valor);
+        return `<li style="display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.45;">
+          <span style="flex-shrink:0;color:${escapeHtml(barra)};">•</span>
+          <span style="min-width:0;word-break:break-word;color:#d4d4d8;">${rotulo ? `<strong style="color:#f4f4f5;">${escapeHtml(rotulo)}:</strong> ` : ''}${corpo}</span>
+        </li>`;
+      };
+
+      return `
+      <div class="${isHl ? 'glow-item' : ''}" style="${glowVar}width:100%;overflow:hidden;${getEstiloBotaoInline(isHl, cor, item)}${vidro}">
+        <div style="display:flex;align-items:stretch;">
+          <span style="flex-shrink:0;width:4px;background:${escapeHtml(barra)};"></span>
+          <div style="min-width:0;flex:1;padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="color:${escapeHtml(barra)};font-size:14px;">${renderizarIcone(item.icon)}</span>
+              <span style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</span>
+            </div>
+            <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;">${linhas.map(linhaHtml).join('')}</ul>
+          </div>
+        </div>
+      </div>`;
     }
 
     // Export de um item tipo schedule: HTML base com IDs únicos. O countdown é
@@ -2856,9 +3243,10 @@
       </a>`; })();
       });
 
-      // Loop principal do export: delega ao renderer público de cada tipo.
-      // O renderer devolve HTML com estilo inline (o arquivo exportado não tem
-      // Tailwind), então o mesmo código serve para link, texto e schedule.
+      // Loop principal do export: cada tipo tem seu produtor de HTML inline.
+      // link/imagem/lista usam versões de export dedicadas (estilo 100% inline);
+      // texto e schedule passam pelos próprios renderers públicos, que já emitem
+      // HTML autocontido (texto) ou com IDs que o script global controla.
       let linksHtml = '';
       const scheduleExportData = [];
       (cfg.links || []).filter(l => l.active).forEach(l => {
@@ -2877,11 +3265,21 @@
           });
           return;
         }
-        const renderer = ITEM_PUBLIC_RENDERERS[l.type] || ITEM_PUBLIC_RENDERERS.link;
         if (l.type === 'link') {
           linksHtml += renderizarLinkExport(l, cfg);
-        } else {
-          linksHtml += renderer(l, false).html || '';
+          return;
+        }
+        if (l.type === 'imagem') {
+          linksHtml += renderizarImagemExport(l, cfg);
+          return;
+        }
+        if (l.type === 'lista') {
+          linksHtml += renderizarListaExport(l, cfg);
+          return;
+        }
+        if (l.type === 'texto') {
+          const r = ITEM_PUBLIC_RENDERERS.texto(l, false);
+          linksHtml += r && r.html ? r.html : '';
         }
       });
 
