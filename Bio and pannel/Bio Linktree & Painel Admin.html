@@ -188,7 +188,7 @@
         <div id="pubLiveBadgeWrap" class="mb-4 hidden">
           <a id="pubLiveBadgeLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-red-950/80 border border-red-500/50 text-red-200 shadow-lg shadow-red-900/30 hover:bg-red-900/80 transition transform hover:scale-105">
             <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-            <span id="pubLiveBadgeText">🔴 AO VIVO NA TWITCH</span>
+            <span id="pubLiveBadgeText">AO VIVO NA TWITCH</span>
           </a>
         </div>
 
@@ -259,7 +259,7 @@
                 <div id="prevLiveBadgeWrap" class="mb-3 hidden">
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-950/80 border border-red-500/50 text-red-200 shadow">
                     <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
-                    <span id="prevLiveBadgeText">🔴 AO VIVO</span>
+                    <span id="prevLiveBadgeText">AO VIVO</span>
                   </span>
                 </div>
 
@@ -321,7 +321,7 @@
               </span>
             </div>
             <p class="text-xs text-zinc-300 leading-relaxed">
-              A badge <strong>"🔴 AO VIVO"</strong> só é ativada se seu canal estiver transmitindo de verdade via DecAPI. Se estiver offline, ela se oculta automaticamente.
+              A badge <strong>"AO VIVO"</strong> só é ativada se seu canal estiver transmitindo de verdade via DecAPI. Se estiver offline, ela se oculta automaticamente.
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
               <div class="sm:col-span-2">
@@ -398,7 +398,7 @@
               </div>
               <div>
                 <label class="block text-xs font-medium text-zinc-400 mb-1">Texto da Badge quando Ao Vivo</label>
-                <input type="text" id="cfgStatusTag" oninput="dispararAtualizacaoGeral()" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition" placeholder="🔴 AO VIVO NA TWITCH">
+                <input type="text" id="cfgStatusTag" oninput="dispararAtualizacaoGeral()" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition" placeholder="AO VIVO NA TWITCH">
               </div>
             </div>
 
@@ -656,7 +656,7 @@
       checkIntervalMs: 60000,
       avatarUrl: "Fotos/foto-5.png",
       bio: "Criador de conteúdo, Gamer & Desenvolvedor de Widgets.\nAcompanhe minhas lives e confira os projetos nos links abaixo!",
-      statusTag: "🔴 AO VIVO NA TWITCH",
+      statusTag: "AO VIVO NA TWITCH",
       primaryColor: "#9146FF",
       // Cores dos textos das três superfícies (página pública, preview e export).
       // Footer: `footerText` é o texto; `footerColor` a cor; `showFooter` liga/desliga.
@@ -1114,7 +1114,7 @@
       if (g('pubVerifiedBadge')) g('pubVerifiedBadge').style.backgroundColor = primary;
       if (g('prevVerifiedBadge')) g('prevVerifiedBadge').style.backgroundColor = primary;
 
-      let statusLabel = appConfig.statusTag || "🔴 AO VIVO NA TWITCH";
+      let statusLabel = appConfig.statusTag || "AO VIVO NA TWITCH";
       if (twitchLiveState.uptime) statusLabel += ` (${formatarUptimePtBr(twitchLiveState.uptime)})`;
 
       const pubBadgeWrap = g('pubLiveBadgeWrap');
@@ -1696,7 +1696,7 @@
         }
 
         let subtitleText = item.subtitle || '';
-        if (linkIsLive && uptimePtBr) subtitleText = `🔴 Ao vivo agora há ${uptimePtBr}!`;
+        if (linkIsLive && uptimePtBr) subtitleText = `Ao vivo agora há ${uptimePtBr}!`;
 
         const blocoTexto = (isM) => `
           <div class="flex items-center justify-between flex-1 ${isM ? 'gap-2 min-w-0' : 'gap-3.5 min-w-0'}">
@@ -1905,7 +1905,7 @@
             countdownHtml = `
               <div class="flex items-center justify-center gap-2 py-2">
                 <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                <span class="text-sm font-black tracking-wide text-red-300 uppercase">🔴 AO VIVO AGORA!</span>
+                <span class="text-sm font-black tracking-wide text-red-300 uppercase">AO VIVO AGORA!</span>
               </div>`;
           } else if (proxima) {
             const c = formatarCountdownBlocos(proxima.alvo - agora);
@@ -2032,7 +2032,7 @@
       s('cfgFooterText', appConfig.footerText || "");
       s('cfgFooterColor', appConfig.footerColor || "#52525b");
       atualizarBotaoShowFooter();
-      s('cfgStatusTag', appConfig.statusTag || "🔴 AO VIVO NA TWITCH");
+      s('cfgStatusTag', appConfig.statusTag || "AO VIVO NA TWITCH");
       s('cfgPrimaryColor', appConfig.primaryColor || "#9146FF");
       if (document.getElementById('cfgPrimaryColorHex')) document.getElementById('cfgPrimaryColorHex').innerText = appConfig.primaryColor || "#9146FF";
       s('cfgBgColor', appConfig.bgColor || "#0e0e10");
@@ -2430,7 +2430,7 @@
             const alvoWrap = wrap.querySelector('[data-countdown-alvo]');
             if (aoVivo) {
               if (alvoWrap) {
-                alvoWrap.innerHTML = `<div class="flex items-center justify-center gap-2 py-2"><span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span><span class="text-sm font-black tracking-wide text-red-300 uppercase">🔴 AO VIVO AGORA!</span></div>`;
+                alvoWrap.innerHTML = `<div class="flex items-center justify-center gap-2 py-2"><span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span><span class="text-sm font-black tracking-wide text-red-300 uppercase">AO VIVO AGORA!</span></div>`;
               }
               [blocoD, blocoH, blocoM, blocoS].forEach(b => { if (b) b.closest('div').style.display = 'none'; });
             } else if (proxima) {
@@ -3421,7 +3421,7 @@
     <div id="liveBadgeWrap" style="margin-bottom: 16px; display: none;">
       <a href="https://twitch.tv/${channel}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 9999px; font-size: 12px; font-weight: 800; background: rgba(127, 29, 29, 0.85); border: 1px solid rgba(239, 68, 68, 0.6); color: #fecaca; text-decoration: none; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);" class="live-pulse">
         <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
-        <span id="liveBadgeText">🔴 AO VIVO NA TWITCH</span>
+        <span id="liveBadgeText">AO VIVO NA TWITCH</span>
       </a>
     </div>
 
@@ -3439,7 +3439,7 @@
     const channelName = "${channel}";
     const autoDetect = ${cfg.autoDetectLive ? 'true' : 'false'};
     const checkIntervalMs = ${cfg.checkIntervalMs || 60000};
-    const statusTag = ${JSON.stringify(cfg.statusTag || '🔴 AO VIVO NA TWITCH')};
+    const statusTag = ${JSON.stringify(cfg.statusTag || 'AO VIVO NA TWITCH')};
 
     // Espelha o PLATAFORMAS_LIVE do painel. Só entram plataformas com API pública
     // real; as demais ficam de fora e o item simplesmente não é monitorado.
@@ -3481,7 +3481,7 @@
       if (btn) { btn.style.borderColor = '#ef4444'; btn.style.background = 'rgba(127, 29, 29, 0.4)'; btn.classList.add('live-pulse'); }
       if (iconBox) iconBox.style.background = '#ef4444';
       if (badgeTag) badgeTag.innerHTML = '<span style="font-size: 10px; font-weight: 800; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">AO VIVO</span>';
-      if (subText) { subText.innerText = '🔴 Ao vivo agora há ' + uptimePtBr + '!'; subText.style.color = '#fca5a5'; }
+      if (subText) { subText.innerText = 'Ao vivo agora há ' + uptimePtBr + '!'; subText.style.color = '#fca5a5'; }
     }
 
     function restaurarItem(alvo) {
@@ -3529,7 +3529,7 @@
           const btn = document.getElementById(alvoPrincipal.btnId);
           if (btn && btn.classList.contains('live-pulse')) {
             const sub = document.getElementById(alvoPrincipal.subId);
-            if (sub) uptimePrincipal = sub.innerText.replace(/^🔴 Ao vivo agora há /, '').replace(/!$/, '');
+            if (sub) uptimePrincipal = sub.innerText.replace(/^Ao vivo agora há /, '').replace(/!$/, '');
           }
         }
         if (algumAoVivo) {
@@ -3598,7 +3598,7 @@
           s: wrap.querySelector('[data-countdown="s"]')
         };
         if (aoVivo) {
-          if (alvoEl) alvoEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;animation:liveGlow 2s infinite;"></span><span style="font-size:14px;font-weight:900;text-transform:uppercase;color:#fca5a5;">🔴 AO VIVO AGORA!</span></div>';
+          if (alvoEl) alvoEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;animation:liveGlow 2s infinite;"></span><span style="font-size:14px;font-weight:900;text-transform:uppercase;color:#fca5a5;">AO VIVO AGORA!</span></div>';
           Object.values(blocos).forEach(b => { if (b && b.closest('div')) b.closest('div').style.display = 'none'; });
         } else if (proxima) {
           if (alvoEl) alvoEl.innerHTML = '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#a1a1aa;">Próxima live: ' + (proxima.dia.label || '') + (proxima.live && proxima.live.info ? ' · ' + proxima.live.info : '') + '</span>';
