@@ -11,7 +11,7 @@
   "bioColor": "#ffffff",
   "footerText": "",
   "footerColor": "#ffffff",
-  "showFooter": true,
+  "showFooter": false,
   "bgColor": "#0e0e10",
   "bgType": "aurora-animated",
   "bgColor2": "#ff0000",
@@ -100,8 +100,9 @@
       "textSize": "md",
       "textAlign": "left",
       "syncLiveStatus": true,
-      "livePlatform": "twitch",
-      "useFavicon": true
+      "livePlatform": "auto",
+      "useFavicon": true,
+      "barColor": ""
     },
     {
       "id": "link_1791045432553",
@@ -124,7 +125,8 @@
       "textAlign": "left",
       "syncLiveStatus": false,
       "livePlatform": "auto",
-      "useFavicon": true
+      "useFavicon": true,
+      "barColor": ""
     },
     {
       "id": "link_discord",
@@ -147,7 +149,8 @@
       "textAlign": "left",
       "syncLiveStatus": false,
       "livePlatform": "auto",
-      "useFavicon": true
+      "useFavicon": true,
+      "barColor": ""
     },
     {
       "id": "link_setup",
@@ -170,30 +173,28 @@
       "textAlign": "left",
       "syncLiveStatus": false,
       "livePlatform": "auto",
-      "useFavicon": false
+      "useFavicon": false,
+      "barColor": ""
     },
     {
       "id": "link_pix",
       "title": "Mande uma mensagem / Pix",
-      "subtitle": "Apoie a produção de conteúdo do canal",
       "url": "https://livepix.gg/omarotto",
       "icon": "fa-solid fa-qrcode",
       "highlight": false,
-      "badge": "Apoio",
       "active": true,
       "glowColor": "",
       "imageUrl": "https://panels.twitch.tv/panel-144757590-image-df463359-d199-441a-85a6-ccc3ed978964",
-      "imagePosition": "bottom",
       "imageSize": "banner",
       "imageFit": "contain",
-      "type": "link",
+      "type": "imagem",
       "content": "",
       "textColor": "",
       "textSize": "md",
       "textAlign": "left",
-      "syncLiveStatus": false,
-      "livePlatform": "auto",
-      "useFavicon": false
+      "useFavicon": false,
+      "barColor": "",
+      "imagePosition": "bottom"
     },
     {
       "id": "link_widgets",
@@ -216,7 +217,115 @@
       "textAlign": "left",
       "syncLiveStatus": false,
       "livePlatform": "auto",
-      "useFavicon": false
+      "useFavicon": false,
+      "barColor": ""
+    },
+    {
+      "id": "sched_1791411213078",
+      "type": "schedule",
+      "title": "Cronograma de Lives",
+      "icon": "fa-solid fa-calendar-days",
+      "highlight": false,
+      "active": true,
+      "glowColor": "",
+      "showCountdown": true,
+      "scheduleDays": [
+        {
+          "day": 0,
+          "label": "DOM",
+          "active": false,
+          "lives": []
+        },
+        {
+          "day": 1,
+          "label": "SEG",
+          "active": true,
+          "lives": [
+            {
+              "time": "16:00",
+              "info": "Games"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "label": "TER",
+          "active": true,
+          "lives": [
+            {
+              "time": "09:00",
+              "info": "Pomodoro"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "label": "QUA",
+          "active": true,
+          "lives": [
+            {
+              "time": "16:00",
+              "info": "Games"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "label": "QUI",
+          "active": true,
+          "lives": [
+            {
+              "time": "09:00",
+              "info": "Pomodoro"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "label": "SEX",
+          "active": true,
+          "lives": [
+            {
+              "time": "16:00",
+              "info": "Games"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "label": "SÁB",
+          "active": false,
+          "lives": []
+        }
+      ],
+      "imageUrl": "",
+      "useFavicon": false,
+      "imagePosition": "left",
+      "imageSize": "md",
+      "imageFit": "cover",
+      "content": "",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left",
+      "barColor": ""
+    },
+    {
+      "id": "txt_1791900574703",
+      "type": "texto",
+      "title": "Meu Setup",
+      "content": "\nEsse é o meu Setup:\n>**PC**\n* **Placa Mãe:** [Gigabyte B760m Gaming Ac](https://meli.la/1rQnFeB)\n* **Processador:** [Intel Core i5 14400F](https://meli.la/1yrRezX)\n* **Memória RAM:** [DDR4 Corsair Vengeance RGB RS, 32GB (2x16GB), 3600MHz](https://meli.la/2fmcMgZ)\n* **Placa de Vídeo:** [NVIDIA GeForce RTX 4060 8GB](https://meli.la/16rJf2e)\n* **Teclado:** [Redragon Harpe2](https://meli.la/1GpWtjU)\n* **Mouse:** [Redragon GRIFFIN M607](https://meli.la/1azA2ZN)\n* **Joystick:** [Gamesir T4 Nova Lite](https://meli.la/1psVLpC)\n* **Headphone:** [Dapon H02d](https://meli.la/2NSFp8q)\n\n>**Consoles**\n* [Nintendo Switch](https://meli.la/2Mm8RhW)\n* [Nintendo Switch 2](https://meli.la/2tJAtm7)\n* [Playstation 5](https://meli.la/2PHHSFy)",
+      "textColor": "",
+      "textSize": "md",
+      "textAlign": "left",
+      "active": true,
+      "glowColor": "",
+      "imageUrl": "",
+      "useFavicon": false,
+      "imagePosition": "left",
+      "imageSize": "md",
+      "imageFit": "cover",
+      "barColor": "",
+      "icon": "fa-solid fa-align-left"
     }
   ],
   "socialHoverColor": "#98893e"
