@@ -1567,8 +1567,16 @@
     // (top/bottom vira elipse); nesses casos cai para cantos arredondados seguros.
     // No modo pílula com imagem pequena (avatar, md, lg) a imagem fica dentro do
     // quadrado/thumb, então o raio não corta o conteúdo.
-    function raioEfetivoItem(item) {
-      if (appConfig.buttonRadius !== 'rounded-full') return appConfig.buttonRadius || 'rounded-2xl';
+    // Raio efetivo do card: segue o tema escolhido (Moderno/Pílula/Compacto/Reto).
+    // A única exceção é a pílula pura: cards em coluna com imagem alta (top/bottom
+    // vira elipse) e conteúdo multilinha caem para cantos arredondados seguros.
+    function raioEfetivoItem(item, multilinha) {
+      const raio = appConfig.buttonRadius || 'rounded-2xl';
+      // Compacto e Reto nunca cortam conteúdo: valem para qualquer card.
+      if (raio !== 'rounded-full') return raio;
+      // Cards multilinha (lista, texto, schedule, imagem com banner/contain) nunca
+      // podem usar rounded-full — o card vira uma elipse e corta o conteúdo.
+      if (multilinha) return 'rounded-2xl';
       const pos = getItemImagePosition(item);
       const temImagem = !!(item && item.imageUrl && item.imageUrl.trim());
       if (temImagem && (pos === 'top' || pos === 'bottom')) return 'rounded-3xl';
@@ -1587,10 +1595,10 @@
 
     // Estilo de botão em CSS puro (para o HTML exportado). Espelha getEstiloBotaoClasses
     // para que o index.html gerado respeite os mesmos controles do painel.
-    const BOTAO_RAIO_PX = { "rounded-full": "9999px", "rounded-3xl": "24px", "rounded-2xl": "16px", "rounded-xl": "12px", "rounded-lg": "8px", "rounded-md": "6px" };
+    const BOTAO_RAIO_PX = { "rounded-full": "9999px", "rounded-3xl": "24px", "rounded-2xl": "16px", "rounded-xl": "12px", "rounded-lg": "8px", "rounded-md": "6px", "rounded-none": "0px" };
 
-    function getEstiloBotaoInline(isHighlight, corBorda, item) {
-      const raio = BOTAO_RAIO_PX[raioEfetivoItem(item)] || "16px";
+    function getEstiloBotaoInline(isHighlight, corBorda, item, multilinha) {
+      const raio = BOTAO_RAIO_PX[raioEfetivoItem(item, multilinha)] || "16px";
       const estilo = appConfig.buttonStyle || "glass";
       const borda = isHighlight ? `2px solid ${corBorda || appConfig.primaryColor || '#9146ff'}` : "1px solid #27272a";
       let bg, cor, sombra;
@@ -1711,9 +1719,10 @@
         return { conteudo, layoutCol: false, linkIsLive, item };
       },
 
-      // Card de imagem: a mídia é o conteúdo (sem botão/chevron). Os limites vêm
-      // de CONTAIN_SIZES quando o enquadramento é 'contain'; no 'cover' a caixa
-      // corta. Com URL preenchida, o card inteiro vira link.
+      // Card de imagem: cabeçalho padronizado (ícone + título + subtítulo +
+      // chevron quando há URL) e a imagem como corpo, logo abaixo. Os limites
+      // vêm de CONTAIN_SIZES quando o enquadramento é 'contain'; no 'cover' a
+      // caixa corta. Com URL preenchida, o card inteiro vira link.
       imagem(item, isMockup) {
         const temImg = !!(item.imageUrl && item.imageUrl.trim());
         const cor = getItemGlowColor(item);
@@ -1747,33 +1756,44 @@
           ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} class="${imgClasses}" style="${imgStyle}">`
           : `<div class="w-full ${isMockup ? 'h-16' : 'h-32'} flex items-center justify-center text-zinc-600 bg-zinc-900/60" style="font-size:${isMockup ? '14px' : '22px'};">${renderizarIcone('fa-solid fa-image')}</div>`;
 
-        // Tamanhos grandes viram faixa full-width e mantêm a legenda embaixo;
-        // nos demais a imagem entra no quadradinho da esquerda, igual aos
-        // outros cards (ícone + título + subtítulo + chevron).
+        // Cabeçalho padronizado no mesmo molde dos cards de link: caixa de
+        // ícone quadrada, título em negrito, subtítulo discreto e chevron só
+        // quando existe URL de destino. Tamanhos grandes continuam virando
+        // faixa full-width; nos demais o corpo da imagem entra logo abaixo.
         const isFaixa = (sz === 'banner') || (sz === 'lg' && fit === 'cover');
         const posImg = item.imagePosition === 'bottom' ? 'bottom' : 'top';
 
+        const tam = isMockup ? 'w-7 h-7 rounded-lg text-xs' : 'w-10 h-10 rounded-xl text-lg';
+        const fundoIcone = item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400';
+        const temCabecalho = !!(item.title || item.subtitle);
+        const temDestino = !!((item.url || '').trim());
+        const linhaCabecalho = `
+          <div class="flex items-center ${isMockup ? 'gap-2.5' : 'gap-3.5'} w-full min-w-0">
+            <div class="${tam} flex-shrink-0 flex items-center justify-center ${fundoIcone}">${renderizarIcone(item.icon || 'fa-solid fa-image')}</div>
+            <div class="min-w-0 flex-1">
+              ${item.title ? `<span class="block font-bold ${isMockup ? 'text-xs' : 'text-sm'} text-zinc-100 truncate">${escapeHtml(item.title)}</span>` : ''}
+              ${item.subtitle ? `<p class="${isMockup ? 'text-[10px]' : 'text-xs'} text-zinc-400 truncate mt-0.5">${escapeHtml(item.subtitle)}</p>` : ''}
+            </div>
+            ${temDestino ? `<div class="flex-shrink-0 ml-auto text-zinc-500 transition duration-200 pl-2"><i class="fa-solid fa-chevron-right ${isMockup ? 'text-[10px]' : 'text-xs'}"></i></div>` : ''}
+          </div>`;
+
         let midiaHtml, legenda = '';
         if (isFaixa) {
-          legenda = item.title
-            ? `<div class="${isMockup ? 'px-2 py-1 text-[9px]' : 'px-3 py-2 text-[11px]'} text-center font-medium text-zinc-300 truncate">${escapeHtml(item.title)}</div>`
-            : '';
+          legenda = temCabecalho ? `<div class="${isMockup ? 'px-2 py-2' : 'px-3 py-3'}">${linhaCabecalho}</div>` : '';
           midiaHtml = imgHtml;
         } else {
-          const tam = isMockup ? 'w-7 h-7 rounded-lg text-xs' : 'w-10 h-10 rounded-xl text-lg';
-          const fundo = temImg ? 'bg-zinc-800/80 overflow-hidden' : (item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400');
-          const midiaConteudo = temImg
-            ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} class="w-full h-full object-cover">`
-            : renderizarIcone('fa-solid fa-image');
-          const gap = isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2';
-          midiaHtml = `<div class="flex items-center ${gap} flex-1 w-full"><div class="${tam} flex-shrink-0 flex items-center justify-center ${fundo}">${midiaConteudo}</div><div class="min-w-0 flex-1"><div class="flex items-center gap-2"><span class="font-bold ${isMockup ? 'text-xs text-zinc-100 truncate' : 'text-sm text-zinc-100 truncate'}">${escapeHtml(item.title || '')}</span></div>${item.subtitle ? `<p class="${isMockup ? 'text-[10px]' : 'text-xs'} text-zinc-400 truncate mt-0.5">${escapeHtml(item.subtitle)}</p>` : ''}</div><div class="flex-shrink-0 ml-auto text-zinc-500 transition duration-200 pl-2"><i class="fa-solid fa-chevron-right ${isMockup ? 'text-[10px]' : 'text-xs'}"></i></div></div>`;
+          legenda = temCabecalho ? `<div class="${isMockup ? 'px-2.5 pt-2.5' : 'px-4 pt-4'}">${linhaCabecalho}</div>` : '';
+          const clsMidia = temCabecalho
+            ? `${isMockup ? 'mt-2 px-2.5 pb-2.5' : 'mt-3 px-4 pb-4'}`
+            : (isMockup ? 'p-2.5' : 'p-4');
+          midiaHtml = `<div class="${clsMidia}">${imgHtml}</div>`;
         }
 
-        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item);
-        // A faixa usa a imagem encostada nas bordas; no formato linha o padding vem
-        // daqui porque getEstiloBotaoInline só cuida de raio/fundo/borda/sombra.
-        const padding = isFaixa ? '' : (isMockup ? 'padding:10px;' : 'padding:16px;');
-        const card = `<div class="w-full ${isFaixa ? 'overflow-hidden' : ''} ${item.highlight ? 'animate-pulse-glow' : ''}" style="${estiloCard} ${padding} --glow-rgb: ${rgb};">${posImg === 'bottom' ? `${legenda}${midiaHtml}` : `${midiaHtml}${legenda}`}</div>`;
+        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item, true);
+        const conteudo = isFaixa
+          ? (posImg === 'bottom' ? `${legenda}${midiaHtml}` : `${midiaHtml}${legenda}`)
+          : `${legenda}${midiaHtml}`;
+        const card = `<div class="w-full ${isFaixa ? 'overflow-hidden' : ''} ${item.highlight ? 'animate-pulse-glow' : ''}" style="${estiloCard} --glow-rgb: ${rgb};">${conteudo}</div>`;
 
         const destino = (item.url || '').trim();
         if (!destino) return { html: card };
@@ -1782,9 +1802,37 @@
         };
       },
 
-      texto(item) {
+      // Card de texto: mesma casca dos demais cards (fundo, borda, raio seguro
+      // e blur do tema), com o cabeçalho padronizado no topo e o Markdown como
+      // corpo. Nunca usa rounded-full — é conteúdo multilinha.
+      texto(item, isMockup) {
+        const cor = getItemGlowColor(item);
+        const rgb = hexToRgbTriplet(cor);
+        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item, true);
+        const vidro = (appConfig.buttonStyle === 'glass' && appConfig.bgType && appConfig.bgType !== 'solid')
+          ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
+        const tam = isMockup ? 'w-7 h-7 rounded-lg text-xs' : 'w-10 h-10 rounded-xl text-lg';
+        const fundoIcone = item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400';
+        const temDestino = !!((item.url || '').trim());
+        const corpo = `<div class="${isMockup ? 'px-2.5 pb-2.5 pt-1.5' : 'px-4 pb-4 pt-2'} ${getClasseBlocoTexto(item.textSize, item.textAlign)}">${markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' })}</div>`;
+
+        const card = `
+          <div class="w-full overflow-hidden ${item.highlight ? 'animate-pulse-glow' : ''}" style="${estiloCard} --glow-rgb: ${rgb}; ${vidro}">
+            <div class="flex items-center ${isMockup ? 'gap-2.5 px-2.5 pt-2.5' : 'gap-3.5 px-4 pt-4'} w-full min-w-0">
+              <div class="${tam} flex-shrink-0 flex items-center justify-center ${fundoIcone}">${renderizarIcone(item.icon || 'fa-solid fa-align-left')}</div>
+              <div class="min-w-0 flex-1">
+                ${item.title ? `<span class="block font-bold ${isMockup ? 'text-xs' : 'text-sm'} text-zinc-100 truncate">${escapeHtml(item.title)}</span>` : ''}
+                ${item.subtitle ? `<p class="${isMockup ? 'text-[10px]' : 'text-xs'} text-zinc-400 truncate mt-0.5">${escapeHtml(item.subtitle)}</p>` : ''}
+              </div>
+              ${temDestino ? `<div class="flex-shrink-0 ml-auto text-zinc-500 transition duration-200 pl-2"><i class="fa-solid fa-chevron-right ${isMockup ? 'text-[10px]' : 'text-xs'}"></i></div>` : ''}
+            </div>
+            ${corpo}
+          </div>`;
+
+        const destino = (item.url || '').trim();
+        if (!destino) return { html: card };
         return {
-          html: `<div class="${getClasseBlocoTexto(item.textSize, item.textAlign)}">${markdownParaHtml(item.content, { corBarra: item.textColor || appConfig.primaryColor || '#9146FF' })}</div>`
+          html: `<a href="${escapeHtml(destino)}" target="_blank" rel="noopener noreferrer" class="block w-full transition duration-200 hover:-translate-y-0.5 hover:opacity-95">${card}</a>`
         };
       },
 
@@ -1811,21 +1859,29 @@
           </li>`;
         };
 
-        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item);
+        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item, true);
         const vidro = (appConfig.buttonStyle === 'glass' && appConfig.bgType && appConfig.bgType !== 'solid')
           ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
+
+        const tam = isMockup ? 'w-7 h-7 rounded-lg text-xs' : 'w-10 h-10 rounded-xl text-lg';
+        const fundoIcone = item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400';
+        const temDestino = !!((item.url || '').trim());
 
         return {
           html: `
           <div class="w-full overflow-hidden ${item.highlight ? 'animate-pulse-glow' : ''}" style="${estiloCard} --glow-rgb: ${rgb}; ${vidro}">
             <div class="flex items-stretch">
               <span class="shrink-0" style="width:${isMockup ? 3 : 4}px;background:${escapeHtml(barra)};"></span>
-              <div class="min-w-0 flex-1 ${isMockup ? 'px-2 py-1.5' : 'px-3.5 py-3'}">
-                <div class="flex items-center gap-2 ${isMockup ? 'mb-1' : 'mb-2'}">
-                  <span class="${isMockup ? 'text-[10px]' : 'text-sm'}" style="color:${escapeHtml(barra)};">${renderizarIcone(item.icon)}</span>
-                  <span class="${isMockup ? 'text-[10px]' : 'text-sm'} font-bold text-white truncate">${escapeHtml(item.title)}</span>
+              <div class="min-w-0 flex-1 ${isMockup ? 'px-2.5 py-2' : 'px-4 py-3'}">
+                <div class="flex items-center ${isMockup ? 'gap-2' : 'gap-3.5'} ${isMockup ? 'mb-1.5' : 'mb-2.5'} w-full min-w-0">
+                  <div class="${tam} flex-shrink-0 flex items-center justify-center ${fundoIcone}">${renderizarIcone(item.icon || 'fa-solid fa-list-check')}</div>
+                  <div class="min-w-0 flex-1">
+                    <span class="block font-bold ${isMockup ? 'text-xs' : 'text-sm'} text-zinc-100 truncate">${escapeHtml(item.title || '')}</span>
+                    ${item.subtitle ? `<p class="${isMockup ? 'text-[10px]' : 'text-xs'} text-zinc-400 truncate mt-0.5">${escapeHtml(item.subtitle)}</p>` : ''}
+                  </div>
+                  ${temDestino ? `<div class="flex-shrink-0 ml-auto text-zinc-500 transition duration-200 pl-2"><i class="fa-solid fa-chevron-right ${isMockup ? 'text-[10px]' : 'text-xs'}"></i></div>` : ''}
                 </div>
-                <ul class="flex flex-col ${isMockup ? 'gap-0.5' : 'gap-1'}">${linhas.map(linhaHtml).join('')}</ul>
+                <ul class="flex flex-col ${isMockup ? 'gap-0.5 pl-1' : 'gap-1 pl-1.5'}">${linhas.map(linhaHtml).join('')}</ul>
               </div>
             </div>
           </div>`
@@ -1891,20 +1947,23 @@
             </div>`;
         }).join('');
 
-        const estiloCard = item.highlight
-          ? `border: 2px solid ${cor}; box-shadow: 0 0 20px rgba(${rgb}, 0.55);`
-          : `border: 1px solid #27272a; box-shadow: 0 10px 15px -3px rgba(0,0,0,.4);`;
+        const estiloCard = getEstiloBotaoInline(!!item.highlight, cor, item, true);
         const vidro = (appConfig.buttonStyle === 'glass' && appConfig.bgType && appConfig.bgType !== 'solid') ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
         // Card de cronograma é sempre retangular, então pílula pura viraria
         // elipse; segue o tema com um passo mais seguro nesse caso.
         const raioCard = appConfig.buttonRadius === 'rounded-full' ? 'rounded-3xl' : (appConfig.buttonRadius || 'rounded-3xl');
+        const temDestino = !!((item.url || '').trim());
 
         return {
           html: `
-          <div data-countdown-wrap="${isMockup ? 'mock_' : ''}${item.id}" class="w-full ${isMockup ? 'p-2.5' : 'p-4'} ${raioCard} flex flex-col gap-2 ${item.highlight ? 'animate-pulse-glow' : ''}" style="background: rgba(24,24,27,.72); ${estiloCard} ${vidro} --glow-rgb: ${rgb};">
-            <div class="flex items-center gap-2">
-              <span class="${isMockup ? 'text-xs' : 'text-sm'}" style="color:${cor};">${renderizarIcone(item.icon)}</span>
-              <span class="${isMockup ? 'text-xs' : 'text-sm'} font-bold text-white truncate">${escapeHtml(item.title)}</span>
+          <div data-countdown-wrap="${isMockup ? 'mock_' : ''}${item.id}" class="w-full ${isMockup ? 'p-2.5' : 'p-4'} ${raioCard} flex flex-col gap-2 ${item.highlight ? 'animate-pulse-glow' : ''}" style="${estiloCard} ${vidro} --glow-rgb: ${rgb};">
+            <div class="flex items-center ${isMockup ? 'gap-2.5' : 'gap-3.5'} w-full min-w-0">
+              <div class="${isMockup ? 'w-7 h-7 rounded-lg text-xs' : 'w-10 h-10 rounded-xl text-lg'} flex-shrink-0 flex items-center justify-center ${item.highlight ? 'bg-purple-600 text-white' : 'bg-zinc-800/80 text-purple-400'}">${renderizarIcone(item.icon || 'fa-solid fa-calendar-days')}</div>
+              <div class="min-w-0 flex-1">
+                <span class="block ${isMockup ? 'text-xs' : 'text-sm'} font-bold text-zinc-100 truncate">${escapeHtml(item.title || '')}</span>
+                ${item.subtitle ? `<p class="${isMockup ? 'text-[10px]' : 'text-xs'} text-zinc-400 truncate mt-0.5">${escapeHtml(item.subtitle)}</p>` : ''}
+              </div>
+              ${temDestino ? `<div class="flex-shrink-0 ml-auto text-zinc-500 transition duration-200 pl-2"><i class="fa-solid fa-chevron-right ${isMockup ? 'text-[10px]' : 'text-xs'}"></i></div>` : ''}
             </div>
             ${countdownHtml}
             <div class="grid grid-cols-7 gap-1">${gradeHtml}</div>
@@ -2225,8 +2284,8 @@
         const opcoesTipo = Object.entries(ITEM_TYPES)
           .map(([chave, def]) => `<option value="${chave}" ${item.type === chave ? 'selected' : ''}>${def.label}</option>`)
           .join('');
-        // Ícones que o item realmente carrega. 'imagem' e 'texto' não têm campo
-        // de ícone: o botão vira um selo estático do tipo, sem abrir o modal.
+        // Ícones que o item realmente carrega. 'texto' não tem campo de ícone:
+        // o botão vira um selo estático do tipo, sem abrir o modal.
         const ICONE_POR_TIPO = {
           link: 'fa-solid fa-link',
           imagem: 'fa-solid fa-image',
@@ -2235,7 +2294,7 @@
           lista: 'fa-solid fa-list-check'
         };
         const tipoDef = ITEM_TYPES[item.type] || ITEM_TYPES.link;
-        const temIconeEditavel = item.type !== 'imagem' && item.type !== 'texto';
+        const temIconeEditavel = item.type !== 'texto';
         const iconeCard = temIconeEditavel
           ? renderizarIcone(item.icon || ICONE_POR_TIPO[item.type])
           : renderizarIcone(ICONE_POR_TIPO[item.type] || 'fa-solid fa-cube');
@@ -2460,9 +2519,10 @@
         item.useFavicon = item.useFavicon === true;
         if (typeof item.imageUrl !== 'string') item.imageUrl = "";
         if (!item.url) item.url = "";
-        // Campos que só existem em 'link' não devem seguir viagem para o card de imagem.
+        if (!item.icon || item.icon === 'fa-solid fa-link') item.icon = 'fa-solid fa-image';
+        // Campos que só existem em 'link' não devem seguir viagem para o card
+        // de imagem. 'subtitle' fica: agora alimenta o cabeçalho padronizado.
         delete item.badge;
-        delete item.subtitle;
         delete item.syncLiveStatus;
         delete item.livePlatform;
       } else {
@@ -2556,6 +2616,8 @@
         if (!['sm', 'md', 'lg', 'banner'].includes(item.imageSize)) item.imageSize = 'md';
         if (!['cover', 'contain'].includes(item.imageFit)) item.imageFit = 'cover';
         if (!['link', 'imagem', 'texto', 'schedule', 'lista'].includes(item.type)) item.type = 'link';
+        if (item.type === 'imagem' && (!item.icon || item.icon === 'fa-solid fa-link')) item.icon = 'fa-solid fa-image';
+        if (item.type === 'schedule' && (!item.icon || item.icon === 'fa-solid fa-link')) item.icon = 'fa-solid fa-calendar-days';
         if (typeof item.content !== 'string') item.content = "";
         if (typeof item.textColor !== 'string' || (item.textColor && !/^#[0-9a-f]{6}$/i.test(item.textColor))) item.textColor = "";
         if (!['sm', 'md', 'lg'].includes(item.textSize)) item.textSize = 'md';
@@ -2623,6 +2685,11 @@
               url: typeof l.url === 'string' ? l.url : ''
             }));
           if (!item.icon) item.icon = 'fa-solid fa-list-check';
+        }
+
+        // Item texto: ícone padrão quando o usuário não escolheu um.
+        if (item.type === 'texto' && !item.icon) {
+          item.icon = 'fa-solid fa-align-left';
         }
       });
       return c;
@@ -3061,8 +3128,9 @@
       </a>`;
     }
 
-    // Export de um item tipo imagem: card com a mídia (limites de CONTAIN_SIZES
-    // quando 'contain'; caixa cortada quando 'cover') e legenda opcional.
+    // Export de um item tipo imagem: cabeçalho padronizado (ícone + título +
+    // subtítulo + chevron quando há URL) com a imagem como corpo, logo abaixo
+    // (limites de CONTAIN_SIZES quando 'contain'; caixa cortada quando 'cover').
     function renderizarImagemExport(item, cfg) {
       const cor = (item.glowColor && item.glowColor.trim()) || cfg.primaryColor || '#9146FF';
       const rgb = hexToRgbTriplet(cor);
@@ -3090,39 +3158,34 @@
         ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} style="${imgStyle}">`
         : `<div style="width:100%;height:160px;display:flex;align-items:center;justify-content:center;color:#52525b;background:rgba(24,24,27,.6);font-size:22px;">${renderizarIcone('fa-solid fa-image')}</div>`;
 
-      // Faixa full-width nos tamanhos grandes (legenda centralizada embaixo);
-      // nos demais entra no quadradinho de 40px, igual aos outros cards.
+      // Cabeçalho padronizado (caixa de ícone + título + subtítulo + chevron
+      // quando há URL). Faixa full-width nos tamanhos grandes; nos demais a
+      // imagem entra logo abaixo do cabeçalho, como o corpo do card.
       const isFaixa = (sz === 'banner') || (sz === 'lg' && fit === 'cover');
+      const posImg = item.imagePosition === 'bottom' ? 'bottom' : 'top';
+
+      const temCabecalho = !!(item.title || item.subtitle);
+      const temDestino = !!((item.url || '').trim());
+      const linhaCabecalho = `
+          <div style="display:flex;align-items:center;gap:14px;width:100%;min-width:0;">
+            <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:16px;${isHl ? 'background:#9333ea;color:#fff;' : 'background:rgba(39,39,42,.8);color:#c084fc;'}">${renderizarIcone(item.icon || 'fa-solid fa-image')}</div>
+            <div style="min-width:0;flex:1;">
+              ${item.title ? `<div style="font-size:14px;font-weight:700;color:#f4f4f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</div>` : ''}
+              ${item.subtitle ? `<div style="font-size:12px;color:#a1a1aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${escapeHtml(item.subtitle)}</div>` : ''}
+            </div>
+            ${temDestino ? `<div style="flex-shrink:0;margin-left:auto;color:#71717a;padding-left:8px;"><i class="fa-solid fa-chevron-right" style="font-size:12px;"></i></div>` : ''}
+          </div>`;
 
       let midiaHtml, legenda = '';
       if (isFaixa) {
-        legenda = item.title
-          ? `<div style="padding:8px 12px;text-align:center;font-size:11px;font-weight:500;color:#d4d4d8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</div>`
-          : '';
+        legenda = temCabecalho ? `<div style="padding:12px 16px;">${linhaCabecalho}</div>` : '';
         midiaHtml = imgHtml;
       } else {
-        const thumbConteudo = temImg
-          ? `<img src="${src}" alt="${escapeHtml(item.title || '')}" loading="lazy" ${fallback} style="width:100%;height:100%;object-fit:cover;display:block;">`
-          : `<span style="font-size:16px;">${renderizarIcone('fa-solid fa-image')}</span>`;
-        const thumbFundo = temImg
-          ? 'background:rgba(39,39,42,.8);overflow:hidden;'
-          : (isHl ? 'background:#9333ea;color:#fff;' : 'background:rgba(39,39,42,.8);color:#c084fc;');
-        const subtitulo = item.subtitle
-          ? `<div style="font-size:12px;color:#a1a1aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${escapeHtml(item.subtitle)}</div>`
-          : '';
-        midiaHtml = `<div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1;width:100%;padding-right:8px;">
-            <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:16px;${thumbFundo}">${thumbConteudo}</div>
-            <div style="min-width:0;flex:1;">
-              <div style="font-size:14px;font-weight:700;color:#f4f4f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title || '')}</div>
-              ${subtitulo}
-            </div>
-            <div style="flex-shrink:0;margin-left:auto;color:#71717a;padding-left:8px;"><i class="fa-solid fa-chevron-right" style="font-size:12px;"></i></div>
-          </div>`;
+        legenda = temCabecalho ? `<div style="padding:16px 16px 0;">${linhaCabecalho}</div>` : '';
+        midiaHtml = `<div style="${temCabecalho ? 'margin-top:12px;padding:0 16px 16px;' : 'padding:16px;'}">${imgHtml}</div>`;
       }
 
-      const posImg = item.imagePosition === 'bottom' ? 'bottom' : 'top';
-      const padding = isFaixa ? '' : 'padding:16px;';
-      const card = `<div class="${isHl ? 'glow-item' : ''}" style="${glowVar}width:100%;${isFaixa ? 'overflow:hidden;' : ''}${padding}${getEstiloBotaoInline(isHl, cor, item)}">${posImg === 'bottom' ? `${legenda}${midiaHtml}` : `${midiaHtml}${legenda}`}</div>`;
+      const card = `<div class="${isHl ? 'glow-item' : ''}" style="${glowVar}width:100%;text-align:left;${isFaixa ? 'overflow:hidden;' : ''}${getEstiloBotaoInline(isHl, cor, item, true)}">${posImg === 'bottom' ? `${legenda}${midiaHtml}` : `${midiaHtml}${legenda}`}</div>`;
       const destino = (item.url || '').trim();
       if (!destino) return card;
       return `<a href="${escapeHtml(destino)}" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;text-decoration:none;transition:transform .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">${card}</a>`;
@@ -3154,15 +3217,19 @@
       };
 
       return `
-      <div class="${isHl ? 'glow-item' : ''}" style="${glowVar}width:100%;overflow:hidden;${getEstiloBotaoInline(isHl, cor, item)}${vidro}">
+      <div class="${isHl ? 'glow-item' : ''}" style="${glowVar}width:100%;overflow:hidden;text-align:left;${getEstiloBotaoInline(isHl, cor, item, true)}${vidro}">
         <div style="display:flex;align-items:stretch;">
           <span style="flex-shrink:0;width:4px;background:${escapeHtml(barra)};"></span>
           <div style="min-width:0;flex:1;padding:14px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <span style="color:${escapeHtml(barra)};font-size:14px;">${renderizarIcone(item.icon)}</span>
-              <span style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</span>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;width:100%;min-width:0;">
+              <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:16px;${isHl ? 'background:#9333ea;color:#fff;' : 'background:rgba(39,39,42,.8);color:#c084fc;'}">${renderizarIcone(item.icon || 'fa-solid fa-list-check')}</div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:14px;font-weight:700;color:#f4f4f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title || '')}</div>
+                ${item.subtitle ? `<div style="font-size:12px;color:#a1a1aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${escapeHtml(item.subtitle)}</div>` : ''}
+              </div>
+              ${((item.url || '').trim()) ? `<div style="flex-shrink:0;margin-left:auto;color:#71717a;padding-left:8px;"><i class="fa-solid fa-chevron-right" style="font-size:12px;"></i></div>` : ''}
             </div>
-            <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;">${linhas.map(linhaHtml).join('')}</ul>
+            <ul style="list-style:none;margin:0;padding:0 0 0 6px;display:flex;flex-direction:column;gap:4px;">${linhas.map(linhaHtml).join('')}</ul>
           </div>
         </div>
       </div>`;
@@ -3207,15 +3274,20 @@
             </div>`;
       }).join('');
 
-      const estiloCard = item.highlight
-        ? `border: 2px solid ${cor}; box-shadow: 0 0 20px rgba(${rgb}, 0.55);`
-        : `border: 1px solid #27272a; box-shadow: 0 10px 15px -3px rgba(0,0,0,.4);`;
+      const estiloCard = getEstiloBotaoInline(item.highlight, cor, item, true);
+
+      // Raio seguro: cronograma é multilinha — nunca rounded-full (viraria elipse).
+      const raioExport = cfg.buttonRadius === 'rounded-full' ? '16px' : (BOTAO_RAIO_PX[cfg.buttonRadius] || "16px");
 
       return `
-          <div data-countdown-wrap="export_${item.id}" style="width:100%;padding:16px;border-radius:16px;display:flex;flex-direction:column;gap:8px;background:rgba(24,24,27,.72);${estiloCard} --glow-rgb: ${rgb};">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="color:${cor};font-size:14px;">${renderizarIcone(item.icon)}</span>
-              <span style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</span>
+          <div data-countdown-wrap="export_${item.id}" style="width:100%;text-align:left;padding:16px;border-radius:${raioExport};display:flex;flex-direction:column;gap:8px;${estiloCard} --glow-rgb: ${rgb};">
+            <div style="display:flex;align-items:center;gap:14px;width:100%;min-width:0;">
+              <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:16px;${item.highlight ? 'background:#9333ea;color:#fff;' : 'background:rgba(39,39,42,.8);color:#c084fc;'}">${renderizarIcone(item.icon || 'fa-solid fa-calendar-days')}</div>
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:14px;font-weight:700;color:#f4f4f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title || '')}</div>
+                ${item.subtitle ? `<div style="font-size:12px;color:#a1a1aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${escapeHtml(item.subtitle)}</div>` : ''}
+              </div>
+              ${((item.url || '').trim()) ? `<div style="flex-shrink:0;margin-left:auto;color:#71717a;padding-left:8px;"><i class="fa-solid fa-chevron-right" style="font-size:12px;"></i></div>` : ''}
             </div>
             ${item.showCountdown !== false ? `
             <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0;">
@@ -3226,6 +3298,34 @@
             </div>` : ''}
             <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;">${gradeHtml}</div>
           </div>`;
+    }
+
+    // Export de um item tipo texto: mesma casca dos demais cards (fundo, borda,
+    // raio seguro e blur do tema) com cabeçalho padronizado e o Markdown como
+    // corpo. Estilo 100% inline — o arquivo exportado não carrega Tailwind.
+    function renderizarTextoExport(item, cfg) {
+      const cor = (item.glowColor && item.glowColor.trim()) || cfg.primaryColor || '#9146FF';
+      const rgb = hexToRgbTriplet(cor);
+      const isHl = !!item.highlight;
+      const glowVar = isHl ? `--glow-rgb: ${rgb}; ` : '';
+      const vidro = (cfg.buttonStyle === 'glass' && cfg.bgType && cfg.bgType !== 'solid')
+        ? 'backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);' : '';
+      const tam = { sm: '11px', md: '13px', lg: '15px' }[item.textSize] || '13px';
+      const alin = item.textAlign === 'center' ? 'center' : 'left';
+      const corpoMd = markdownParaHtml(item.content, { corBarra: item.textColor || cfg.primaryColor || '#9146FF' });
+
+      return `
+      <div class="${isHl ? 'glow-item' : ''}" style="${glowVar}width:100%;overflow:hidden;text-align:${alin};${getEstiloBotaoInline(isHl, cor, item, true)}${vidro}">
+        <div style="display:flex;align-items:center;gap:14px;padding:16px 16px 0;width:100%;min-width:0;">
+          <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:16px;${isHl ? 'background:#9333ea;color:#fff;' : 'background:rgba(39,39,42,.8);color:#c084fc;'}">${renderizarIcone(item.icon || 'fa-solid fa-align-left')}</div>
+          <div style="min-width:0;flex:1;">
+            ${item.title ? `<div style="font-size:14px;font-weight:700;color:#f4f4f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.title)}</div>` : ''}
+            ${item.subtitle ? `<div style="font-size:12px;color:#a1a1aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${escapeHtml(item.subtitle)}</div>` : ''}
+          </div>
+          ${((item.url || '').trim()) ? `<div style="flex-shrink:0;margin-left:auto;color:#71717a;padding-left:8px;"><i class="fa-solid fa-chevron-right" style="font-size:12px;"></i></div>` : ''}
+        </div>
+        <div style="padding:8px 16px 16px;font-size:${tam};text-align:${alin};color:#d4d4d8;line-height:1.625;word-break:break-word;">${corpoMd}</div>
+      </div>`;
     }
 
     function gerarCodigoHTMLPronto() {
@@ -3278,8 +3378,8 @@
           return;
         }
         if (l.type === 'texto') {
-          const r = ITEM_PUBLIC_RENDERERS.texto(l, false);
-          linksHtml += r && r.html ? r.html : '';
+          linksHtml += renderizarTextoExport(l, cfg);
+          return;
         }
       });
 
