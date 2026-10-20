@@ -727,7 +727,8 @@
           active: true,
           glowColor: "",
           syncLiveStatus: false,
-          livePlatform: "auto"
+          livePlatform: "auto",
+          mediaPreview: "none"
         })
       },
       imagem: {
@@ -926,6 +927,263 @@
     // dinâmico e ids do export). Os demais tipos ignoram o recurso por completo.
     function itemSuportaLive(item) {
       return !!item && item.type === 'link';
+    }
+
+    // ============================================================================
+    // Previews e Embeds de mídia (estilo Linktree) — YouTube, Twitch, Instagram.
+    // ============================================================================
+
+    // Modos de exibição de mídia possíveis num item do tipo 'link'.
+    // 'none'      -> apenas o botão normal (padrão).
+    // 'embed'     -> preview/player expandido dentro do card.
+    // 'live_only' -> idem 'embed', mas só quando o canal estiver AO VIVO (Twitch).
+    const MEDIA_PREVIEW_OPCOES = ['none', 'embed', 'live_only'];
+
+    // Detecta a mídia compatível com a URL do item. Retorna null quando a URL
+    // não é de nenhuma plataforma suportada.
+    //   { tipo: 'youtube',       id }
+    //   { tipo: 'twitch_channel', id }
+    //   { tipo: 'twitch_video',   id }
+    //   { tipo: 'instagram',      tipoPost: 'p'|'reel', id }
+    function detectarMidiaUrl(url) {
+      const bruto = String(url || '').trim();
+      if (!bruto) return null;
+      // Normaliza: garante protocolo para a regex e remove parâmetros de
+      // tracking que não alteram o identificador do vídeo/post.
+      let u = bruto;
+      if (!/^https?:\/\//i.test(u)) u = 'https://' + u.replace(/^\/+/, '');
+      let parsed;
+      try { parsed = new URL(u); } catch (e) { return null; }
+      const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+      const partes = parsed.pathname.split('/').filter(Boolean);
+      const q = parsed.searchParams;
+
+      // ---- YouTube ----
+      if (host === 'youtu.be') {
+        const id = partes[0];
+        if (id) return { tipo: 'youtube', id: id };
+        return null;
+      }
+      if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+        if (partes[0] === 'watch') {
+          const id = q.get('v');
+          if (id) return { tipo: 'youtube', id: id };
+        }
+        if (partes[0] === 'shorts' || partes[0] === 'live' || partes[0] === 'embed') {
+          const id = partes[1];
+          if (id) return { tipo: 'youtube', id: id };
+        }
+        return null;
+      }
+
+      // ---- Twitch ----
+      if (host === 'twitch.tv' || host === 'm.twitch.tv') {
+        if (partes[0] === 'videos' && partes[1]) return { tipo: 'twitch_video', id: partes[1] };
+        if (partes[0] === 'videos' || partes[0] === 'directory' || partes[0] === 'download') return null;
+        // Canal: primeiro segmento, ignorando segmentos reservados.
+        const reservados = ['videos', 'directory', 'download', 'settings', 'subscriptions', 'inventory', 'wallet', 'drops', 'search', 'p', 'u', 'jobs', 'team', 'store', 'turbo', 'following'];
+        const canal = partes[0];
+        if (canal && !reservados.includes(canal.toLowerCase())) {
+          return { tipo: 'twitch_channel', id: canal.toLowerCase() };
+        }
+        return null;
+      }
+      if (host === 'clips.twitch.tv') {
+        const id = partes[0];
+        if (id) return { tipo: 'twitch_video', id: id };
+        return null;
+      }
+
+      // ---- Instagram ----
+      if (host === 'instagram.com' || host === 'instagr.am') {
+        if (partes[0] === 'p' || partes[0] === 'tv') {
+          if (partes[1]) return { tipo: 'instagram', tipoPost: 'p', id: partes[1] };
+          return null;
+        }
+        if (partes[0] === 'reel' || partes[0] === 'reels') {
+          if (partes[1]) return { tipo: 'instagram', tipoPost: 'reel', id: partes[1] };
+          return null;
+        }
+        return null;
+      }
+
+      return null;
+    }
+
+    // Troca a fachada (thumbnail) do YouTube pelo player, sem navegar: o card
+    // de link é um <a> e o clique no player não pode abrir outra aba.
+    function montarPlayerYoutube(btn, id) {
+      const wrap = btn && btn.closest ? btn.closest('.yt-wrap') : null;
+      if (!wrap) return;
+      const thumb = wrap.querySelector('.yt-thumb');
+      const player = wrap.querySelector('.yt-player');
+      if (thumb) thumb.style.display = 'none';
+      if (player) {
+        player.style.display = 'block';
+        if (id) player.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
+      }
+      if (btn) btn.style.display = 'none';
+    }
+
+    // Monta a área de mídia (preview/player) do card de link, no estilo Linktree.
+    // Devolve '' quando não há mídia aplicável. A área é renderizada FORA do <a>
+    // do card (ver renderizarLinksDOM) para que o clique no player não navegue.
+    function renderizarAreaMidia(item, midia, linkIsLive, isMockup) {
+      if (!midia) return '';
+      const estiloArea = 'border-radius: 12px; overflow: hidden; margin-top: 12px;';
+      const tam = isMockup ? 40 : 64;
+      const fonte = isMockup ? 14 : 22;
+
+      // ---- YouTube: fachada 16:9 + botão Play ----
+      if (midia.tipo === 'youtube') {
+        const id = String(midia.id);
+        const thumb = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+        const embed = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
+        return `<div class="yt-wrap relative w-full" style="aspect-ratio: 16/9; background: #000; ${estiloArea}">
+          <img class="yt-thumb" src="${thumb}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+          <button type="button" class="yt-play absolute inset-0 w-full h-full flex items-center justify-center" style="background: rgba(0,0,0,.28); border: none; cursor: pointer;" onclick="event.preventDefault(); event.stopPropagation(); montarPlayerYoutube(this, '${id}');">
+            <span style="display: flex; align-items: center; justify-content: center; width: ${tam}px; height: ${tam}px; border-radius: 9999px; background: rgba(220,0,0,.95); color: #fff; font-size: ${fonte}px; line-height: 1;"><i class="fa-solid fa-play"></i></span>
+          </button>
+          <iframe class="yt-player" src="${embed}" title="YouTube" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="display: none; position: absolute; inset: 0; width: 100%; height: 100%; border: 0;"></iframe>
+        </div>`;
+      }
+
+      // ---- Twitch canal ----
+      if (midia.tipo === 'twitch_channel') {
+        const canal = String(midia.id);
+        const ehArquivo = (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:');
+        // Em file:// (painel aberto do disco) e no mockup a Twitch bloqueia o
+        // iframe sem domínio: mostra o preview oficial com badge AO VIVO.
+        if (ehArquivo || isMockup) {
+          const preview = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${canal}-640x360.jpg`;
+          return `<div class="tw-wrap relative w-full" style="aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}">
+            <img src="${preview}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+            <span class="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded bg-red-600 text-white shadow-sm flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span> AO VIVO</span>
+          </div>`;
+        }
+        const host = (window.location && window.location.hostname) || 'localhost';
+        return `<div class="tw-wrap relative w-full" style="aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}">
+          <iframe src="https://player.twitch.tv/?channel=${canal}&parent=${host}&muted=true" height="220" width="100%" title="Twitch" allowfullscreen style="display: block; width: 100%; height: 100%; border: 0;"></iframe>
+        </div>`;
+      }
+
+      // ---- Twitch vídeo/clip: preview estático do próprio clipe ----
+      if (midia.tipo === 'twitch_video') {
+        const id = String(midia.id);
+        return `<div class="tw-wrap relative w-full" style="aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}">
+          <img src="https://clips-media-assets2.twitch.tv/${id}-preview-480x272.jpg" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+        </div>`;
+      }
+
+      // ---- Instagram ----
+      if (midia.tipo === 'instagram') {
+        const tipoPost = midia.tipoPost === 'reel' ? 'reel' : 'p';
+        const id = String(midia.id);
+        const altura = isMockup ? 220 : 380;
+        return `<div class="ig-wrap w-full" style="background: #000; ${estiloArea}">
+          <iframe src="https://www.instagram.com/${tipoPost}/${id}/embed" width="100%" height="${altura}" title="Instagram" frameborder="0" scrolling="no" allowtransparency="true" style="display: block; width: 100%; height: ${altura}px; border: 0;"></iframe>
+        </div>`;
+      }
+
+      return '';
+    }
+
+    // Área de mídia para o HTML exportado (index.html). O export não usa
+    // Tailwind, então tudo aqui é estilo inline. A área é montada FORA do <a>
+    // do cabeçalho: um iframe dentro do link faria o clique no player abrir
+    // outra aba em vez de tocar o vídeo.
+    function renderizarAreaMidiaExport(item, midia) {
+      if (!midia) return '';
+      const estiloArea = 'border-radius: 12px; overflow: hidden; margin-top: 12px;';
+      const modo = (item && item.mediaPreview) || 'none';
+      const id = String(midia.id);
+
+      // ---- YouTube: fachada 16:9 + botão Play ----
+      if (midia.tipo === 'youtube') {
+        const thumb = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+        const embed = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
+        return `<div class="yt-wrap" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #000; ${estiloArea}">
+          <img class="yt-thumb" src="${thumb}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+          <button type="button" class="yt-play" style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.28); border: none; cursor: pointer;" onclick="event.preventDefault(); event.stopPropagation(); montarPlayerYoutubeExp(this);">
+            <span style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 9999px; background: rgba(220,0,0,.95); color: #fff; font-size: 22px; line-height: 1;"><i class="fa-solid fa-play"></i></span>
+          </button>
+          <iframe class="yt-player" src="${embed}" title="YouTube" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="display: none; position: absolute; inset: 0; width: 100%; height: 100%; border: 0;"></iframe>
+        </div>`;
+      }
+
+      // ---- Twitch canal: preview estático; o player real só pode ser montado
+      // em runtime, porque a Twitch exige o domínio hospedeiro no `parent`. ----
+      if (midia.tipo === 'twitch_channel') {
+        const canal = id;
+        const oculto = modo === 'live_only';
+        return `<div id="liveMedia_${item.id}" data-tw-canal="${canal}" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}${oculto ? 'display: none;' : ''}">
+          <img class="tw-thumb" src="https://static-cdn.jtvnw.net/previews-ttv/live_user_${canal}-640x360.jpg" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+        </div>`;
+      }
+
+      // ---- Twitch vídeo/clip: preview estático do próprio clipe ----
+      if (midia.tipo === 'twitch_video') {
+        return `<div style="position: relative; width: 100%; aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}">
+          <img src="https://clips-media-assets2.twitch.tv/${id}-preview-480x272.jpg" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
+        </div>`;
+      }
+
+      // ---- Instagram ----
+      if (midia.tipo === 'instagram') {
+        const tipoPost = midia.tipoPost === 'reel' ? 'reel' : 'p';
+        return `<div style="background: #000; ${estiloArea}">
+          <iframe src="https://www.instagram.com/${tipoPost}/${id}/embed" width="100%" height="380" title="Instagram" frameborder="0" scrolling="no" allowtransparency="true" style="display: block; width: 100%; height: 380px; border: 0;"></iframe>
+        </div>`;
+      }
+
+      return '';
+    }
+
+    // O modo 'live_only' só existe para canal da Twitch (é o único caso em que
+    // o player só deve aparecer quando o canal está no ar).
+    function opcoesMidiaPara(tipoMidia) {
+      const opcoes = [
+        { valor: 'none', rotulo: 'Apenas Botão Normal' },
+        { valor: 'embed', rotulo: 'Mostrar Preview / Player no Card' }
+      ];
+      if (tipoMidia === 'twitch_channel') {
+        opcoes.push({ valor: 'live_only', rotulo: 'Mostrar Player apenas quando AO VIVO' });
+      }
+      return opcoes;
+    }
+
+    // Decide se o item deve exibir a área de mídia agora. Para 'live_only'
+    // depende do estado de live (painel) — o export resolve via 'live_only'.
+    function itemUsaMidia(item, isLive) {
+      if (!item || item.type !== 'link') return false;
+      const modo = item.mediaPreview || 'none';
+      if (!MEDIA_PREVIEW_OPCOES.includes(modo) || modo === 'none') return false;
+      if (modo === 'live_only') return !!isLive;
+      return true;
+    }
+
+    // <option>s do seletor "Exibição de Mídia", conforme o tipo detectado na URL.
+    function renderizarOpcoesMidia(item) {
+      const midia = detectarMidiaUrl(item && item.url);
+      const atual = MEDIA_PREVIEW_OPCOES.includes(item && item.mediaPreview) ? item.mediaPreview : 'none';
+      return opcoesMidiaPara(midia ? midia.tipo : null)
+        .map(o => `<option value="${o.valor}" ${atual === o.valor ? 'selected' : ''}>${escapeHtml(o.rotulo)}</option>`)
+        .join('');
+    }
+
+    // Texto de apoio abaixo do seletor: explica o que a opção escolhida faz.
+    function descricaoMidiaItem(item) {
+      const midia = detectarMidiaUrl(item && item.url);
+      if (!midia) return 'A URL não aponta para YouTube, Twitch ou Instagram — sem preview disponível.';
+      const modo = item && item.mediaPreview ? item.mediaPreview : 'none';
+      if (modo === 'none') return 'O card mostra apenas o botão normal.';
+      if (midia.tipo === 'youtube') return 'Mostra a miniatura do vídeo no card; ao clicar no Play, o player é carregado no próprio lugar.';
+      if (midia.tipo === 'twitch_channel') {
+        if (modo === 'live_only') return 'O player só aparece quando o canal da Twitch está AO VIVO.';
+        return 'Mostra o player da Twitch dentro do card.';
+      }
+      if (midia.tipo === 'twitch_video') return 'Mostra o player da Twitch (clipe/VOD) dentro do card.';
+      return 'Mostra o post/reel do Instagram embutido no card.';
     }
 
     // Kick não possui ícone de marca no FontAwesome 6 Free -> usamos SVG inline.
@@ -1632,8 +1890,8 @@
       return { estilo, over, out };
     }
 
-    function getEstiloBotaoClasses(isHighlight, isLiveTwitch, isMockup = false, item) {
-      const radius = raioEfetivoItem(item);
+    function getEstiloBotaoClasses(isHighlight, isLiveTwitch, isMockup = false, item, multilinha = false) {
+      const radius = raioEfetivoItem(item, multilinha);
       const style = appConfig.buttonStyle || "glass";
       const padding = isMockup ? "p-2.5" : "p-4";
 
@@ -1716,7 +1974,21 @@
 
         const conteudo = `<div class="flex items-center ${isMockup ? 'gap-2.5 min-w-0 pr-1' : 'gap-3.5 min-w-0 pr-2'} flex-1 w-full">${midiaHtml}${blocoTexto(isMockup)}</div>`;
 
-        return { conteudo, layoutCol: false, linkIsLive, item };
+        // Mídia (preview/player) opcional, no estilo Linktree. A área é devolvida
+        // em campo separado do cabeçalho porque precisa ficar FORA do <a> do card:
+        // um iframe dentro do link faria o clique no player abrir outra aba.
+        const midia = detectarMidiaUrl(item.url);
+        const usarMidia = !!(midia) && item.mediaPreview && item.mediaPreview !== 'none'
+          && (item.mediaPreview !== 'live_only' || linkIsLive);
+        const areaMidiaHtml = usarMidia ? renderizarAreaMidia(item, midia, linkIsLive, isMockup) : '';
+
+        return {
+          conteudo,
+          areaMidiaHtml,
+          layoutCol: !!areaMidiaHtml,
+          linkIsLive,
+          item,
+        };
       },
 
       // Card de imagem: cabeçalho padronizado (ícone + título + subtítulo +
@@ -1987,26 +2259,35 @@
 
         if (item.type === 'link') {
           // Link é um <a> com layout próprio (imagem + texto + chevron).
-          const r = renderer(item, false);
-          const a = document.createElement('a');
-          a.href = item.url;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.className = getEstiloBotaoClasses(item.highlight, r.linkIsLive, false, item);
-          if (r.layoutCol) a.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
-          aplicarGlowNoElemento(a, item);
-          a.innerHTML = r.conteudo;
-          if (pubContainer) pubContainer.appendChild(a);
+          // Quando há mídia, o <a> fica só com o cabeçalho e a área de mídia
+          // entra como irmã (fora do link) — senão o clique no player/iframe
+          // abriria o link em outra aba.
+          const montarLink = (r, isMockup, container) => {
+            if (!container) return;
+            const a = document.createElement('a');
+            a.href = item.url;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            const temMidia = !!r.areaMidiaHtml;
+            a.className = getEstiloBotaoClasses(item.highlight, r.linkIsLive, isMockup, item, temMidia);
+            if (r.layoutCol && !temMidia) a.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
+            aplicarGlowNoElemento(a, item);
+            a.innerHTML = r.conteudo;
 
-          const rMock = renderer(item, true);
-          const aPrev = document.createElement('a');
-          aPrev.href = item.url;
-          aPrev.target = "_blank";
-          aPrev.className = getEstiloBotaoClasses(item.highlight, rMock.linkIsLive, true, item);
-          if (rMock.layoutCol) aPrev.classList.add('flex-col', 'items-stretch', 'justify-start', 'p-0', 'overflow-hidden');
-          aplicarGlowNoElemento(aPrev, item);
-          aPrev.innerHTML = rMock.conteudo;
-          if (prevContainer) prevContainer.appendChild(aPrev);
+            if (!temMidia) { container.appendChild(a); return; }
+
+            const wrap = document.createElement('div');
+            wrap.className = 'flex flex-col w-full';
+            wrap.appendChild(a);
+            const area = document.createElement('div');
+            area.className = 'w-full';
+            area.innerHTML = r.areaMidiaHtml;
+            wrap.appendChild(area);
+            container.appendChild(wrap);
+          };
+
+          montarLink(renderer(item, false), false, pubContainer);
+          montarLink(renderer(item, true), true, prevContainer);
           return;
         }
 
@@ -2066,7 +2347,7 @@
         return `
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Título do Botão</label><input type="text" value="${escapeHtml(item.title)}" oninput="atualizarLinkCampo(${index}, 'title', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
-            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino</label><input type="text" value="${escapeHtml(item.url)}" oninput="atualizarLinkCampo(${index}, 'url', this.value); atualizarVisibilidadeLiveItem(${index})" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
+            <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">URL de Destino</label><input type="text" value="${escapeHtml(item.url)}" oninput="atualizarLinkCampo(${index}, 'url', this.value); atualizarVisibilidadeLiveItem(${index}); atualizarVisibilidadeMidiaItem(${index})" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Subtítulo (Opcional)</label><input type="text" value="${escapeHtml(item.subtitle || '')}" oninput="atualizarLinkCampo(${index}, 'subtitle', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
             <div><label class="block text-[11px] font-medium text-zinc-400 mb-0.5">Badge (Ex: NOVO)</label><input type="text" value="${escapeHtml(item.badge || '')}" oninput="atualizarLinkCampo(${index}, 'badge', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"></div>
           </div>
@@ -2084,6 +2365,13 @@
                 <option value="youtube" ${item.livePlatform === 'youtube' ? 'selected' : ''}>YouTube (indisponível)</option>
               </select>
             </div>
+          </div>
+          <div id="midiaBoxWrap_${index}" class="mt-2 ${detectarMidiaUrl(item.url) ? '' : 'hidden'}">
+            <label class="block text-[10px] font-medium text-zinc-500 mb-0.5">Exibição de Mídia (Estilo Linktree)</label>
+            <select id="midiaSel_${index}" onchange="atualizarLinkCampo(${index}, 'mediaPreview', this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-purple-500">
+              ${renderizarOpcoesMidia(item)}
+            </select>
+            <p class="text-[10px] text-zinc-500 mt-1">${descricaoMidiaItem(item)}</p>
           </div>`;
       },
 
@@ -2527,6 +2815,7 @@
         delete item.badge;
         delete item.syncLiveStatus;
         delete item.livePlatform;
+        delete item.mediaPreview;
       } else {
         // 'link': apenas botão de navegação — nenhum campo de imagem/banner.
         item.imageSize = item.imageSize || 'md';
@@ -2538,6 +2827,7 @@
         if (typeof item.badge !== 'string') item.badge = "";
         if (typeof item.syncLiveStatus !== 'boolean') item.syncLiveStatus = false;
         if (!PLATAFORMAS_LIVE_OPCOES.includes(item.livePlatform)) item.livePlatform = 'auto';
+        if (!MEDIA_PREVIEW_OPCOES.includes(item.mediaPreview)) item.mediaPreview = 'none';
       }
       salvarConfiguracao();
       renderizarListaLinksAdmin();
@@ -2626,6 +2916,15 @@
         if (!['left', 'center'].includes(item.textAlign)) item.textAlign = 'left';
         if (typeof item.syncLiveStatus !== 'boolean') item.syncLiveStatus = false;
         if (!PLATAFORMAS_LIVE_OPCOES.includes(item.livePlatform)) item.livePlatform = 'auto';
+        // Preview de mídia: exclusivo do tipo 'link'. Um modo incompatível com
+        // a URL atual (ou URL sem mídia compatível) volta para 'none'.
+        if (!MEDIA_PREVIEW_OPCOES.includes(item.mediaPreview)) item.mediaPreview = 'none';
+        if (item.type !== 'link') item.mediaPreview = 'none';
+        else {
+          const midiaItem = detectarMidiaUrl(item.url);
+          if (!midiaItem) item.mediaPreview = 'none';
+          else if (item.mediaPreview === 'live_only' && midiaItem.tipo !== 'twitch_channel') item.mediaPreview = 'embed';
+        }
         if (!('barColor' in item)) item.barColor = "";
         else if (item.barColor && !/^#[0-9a-f]{6}$/i.test(item.barColor)) item.barColor = "";
 
@@ -2649,6 +2948,7 @@
           delete item.subtitle;
           delete item.syncLiveStatus;
           delete item.livePlatform;
+          delete item.mediaPreview;
         }
 
         // Retrocompatibilidade: item schedule sem grade completa recebe o padrão.
@@ -2979,6 +3279,31 @@
       if (wrap) wrap.classList.toggle('hidden', !(item && item.syncLiveStatus));
     }
 
+    // Mostra/oculta o seletor "Exibição de Mídia" conforme a URL digitada.
+    // Não reconstrói a lista admin — só o wrapper e as <option> — para não
+    // roubar o foco de quem está digitando na URL.
+    function atualizarVisibilidadeMidiaItem(index) {
+      const item = (appConfig.links || [])[index];
+      if (!item) return;
+      const wrapper = document.getElementById(`midiaBoxWrap_${index}`);
+      const sel = document.getElementById(`midiaSel_${index}`);
+      const midia = detectarMidiaUrl(item.url);
+      if (wrapper) wrapper.classList.toggle('hidden', !midia);
+      // URL sem mídia compatível (ou URL trocada) => volta para o botão normal.
+      if (!midia && item.mediaPreview !== 'none') {
+        item.mediaPreview = 'none';
+        salvarConfiguracao();
+      }
+      // 'live_only' só vale para canal da Twitch.
+      if (midia && item.mediaPreview === 'live_only' && midia.tipo !== 'twitch_channel') {
+        item.mediaPreview = 'embed';
+        salvarConfiguracao();
+      }
+      if (sel) sel.innerHTML = renderizarOpcoesMidia(item);
+      const desc = wrapper ? wrapper.querySelector('p') : null;
+      if (desc) desc.textContent = descricaoMidiaItem(item);
+    }
+
     function popularGradeIcones() {
       const grid = document.getElementById('quickIconsGrid');
       if (!grid) return;
@@ -3089,6 +3414,10 @@
             badgeId: `liveBadge_${l.id}`,
             subId: `liveSub_${l.id}`,
             iconId: `liveIcon_${l.id}`,
+            // Container da área de mídia no export (modo 'live_only'): só entra
+            // quando o item realmente mostra o player da Twitch.
+            mediaContainerId: (l.mediaPreview === 'live_only' && alvo.plataforma === 'twitch')
+              ? `liveMedia_${l.id}` : null,
             isPrincipal: alvo.identificador.toLowerCase() === canalPrincipal
           };
         })
@@ -3117,8 +3446,16 @@
         ? `<span style="font-size: 10px; font-weight: 800; background: ${glowCor}; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${escapeHtml(l.badge)}</span>`
         : '';
 
-      return `
-      <a${attrLive('liveBtn', liveBtnId)} href="${escapeHtml(l.url || '#')}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor, l)} text-decoration: none; transition: transform 0.2s, border-color 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+      // Mídia (preview/player) opcional, no estilo Linktree. Fica FORA do <a>
+      // do cabeçalho: um iframe dentro do link faria o clique no player abrir
+      // outra aba em vez de tocar o vídeo no próprio lugar.
+      const midia = detectarMidiaUrl(l.url);
+      const areaMidiaHtml = (midia && l.mediaPreview && l.mediaPreview !== 'none')
+        ? renderizarAreaMidiaExport(l, midia)
+        : '';
+
+      const cabecalho = `
+      <a${attrLive('liveBtn', liveBtnId)} href="${escapeHtml(l.url || '#')}" target="_blank" rel="noopener noreferrer" class="${isHl ? 'glow-item' : ''}" style="${glowVar}display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; ${getEstiloBotaoInline(isHl, glowCor, l, !!areaMidiaHtml)} text-decoration: none; transition: transform 0.2s, border-color 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
           ${iconeHtml}
           <div style="min-width: 0; text-align: left;">
@@ -3128,6 +3465,14 @@
         </div>
         <div style="color: #71717a; font-size: 12px; padding-left: 8px; flex-shrink: 0; margin-left: auto;"><i class="fa-solid fa-chevron-right"></i></div>
       </a>`;
+
+      if (!areaMidiaHtml) return cabecalho;
+
+      // Card em coluna: cabeçalho (dentro do <a>) + área de mídia logo abaixo.
+      return `<div style="width: 100%; display: flex; flex-direction: column;">
+        ${cabecalho}
+        <div style="width: 100%;">${areaMidiaHtml}</div>
+      </div>`;
     }
 
     // Export de um item tipo imagem: cabeçalho padronizado (ícone + título +
@@ -3456,6 +3801,39 @@
       return lower.includes('offline') || lower.includes('not found') || lower.includes('error');
     }
 
+    // Troca a fachada (thumbnail) do YouTube pelo player, sem navegar: o card
+    // de link é um <a> e o clique no player não pode abrir outra aba.
+    function montarPlayerYoutubeExp(btn) {
+      var wrap = btn && btn.closest ? btn.closest('.yt-wrap') : null;
+      if (!wrap) return;
+      var thumb = wrap.querySelector('.yt-thumb');
+      var player = wrap.querySelector('.yt-player');
+      if (thumb) thumb.style.display = 'none';
+      if (player) player.style.display = 'block';
+      if (btn) btn.style.display = 'none';
+    }
+
+    // A Twitch exige o domínio hospedeiro no parâmetro "parent" do player, que
+    // só é conhecido em runtime. O preview estático do HTML serve de fachada
+    // até aqui; aqui o iframe real é montado.
+    function montarPlayersTwitch() {
+      var host = (window.location && window.location.hostname) || 'localhost';
+      var alvos = document.querySelectorAll('[data-tw-canal]');
+      Array.prototype.forEach.call(alvos, function (el) {
+        if (el.querySelector('iframe')) return;
+        var canal = el.getAttribute('data-tw-canal');
+        if (!canal) return;
+        var frame = document.createElement('iframe');
+        frame.src = 'https://player.twitch.tv/?channel=' + encodeURIComponent(canal) + '&parent=' + encodeURIComponent(host) + '&muted=true';
+        frame.title = 'Twitch';
+        frame.setAttribute('allowfullscreen', '');
+        frame.style.cssText = 'display: block; width: 100%; height: 100%; border: 0;';
+        var old = el.querySelector('.tw-thumb');
+        if (old) old.style.display = 'none';
+        el.appendChild(frame);
+      });
+    }
+
     const badgeWrap = document.getElementById('liveBadgeWrap');
     const badgeText = document.getElementById('liveBadgeText');
 
@@ -3478,10 +3856,13 @@
       const iconBox = document.getElementById(alvo.iconId);
       const badgeTag = document.getElementById(alvo.badgeId);
       const subText = document.getElementById(alvo.subId);
+      const media = document.getElementById(alvo.mediaContainerId);
       if (btn) { btn.style.borderColor = '#ef4444'; btn.style.background = 'rgba(127, 29, 29, 0.4)'; btn.classList.add('live-pulse'); }
       if (iconBox) iconBox.style.background = '#ef4444';
       if (badgeTag) badgeTag.innerHTML = '<span style="font-size: 10px; font-weight: 800; background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">AO VIVO</span>';
       if (subText) { subText.innerText = 'Ao vivo agora há ' + uptimePtBr + '!'; subText.style.color = '#fca5a5'; }
+      // Modo 'live_only': o player da Twitch só aparece quando o canal está no ar.
+      if (media) media.style.display = 'block';
     }
 
     function restaurarItem(alvo) {
@@ -3489,9 +3870,11 @@
       const btn = document.getElementById(alvo.btnId);
       const badgeTag = document.getElementById(alvo.badgeId);
       const subText = document.getElementById(alvo.subId);
+      const media = document.getElementById(alvo.mediaContainerId);
       if (btn && orig.btn != null) { btn.setAttribute('style', orig.btn); btn.classList.remove('live-pulse'); }
       if (badgeTag && orig.badge != null) badgeTag.innerHTML = orig.badge;
       if (subText && orig.sub != null) { subText.innerText = orig.sub; subText.style.color = orig.corSub || '#a1a1aa'; }
+      if (media) media.style.display = 'none';
     }
 
     async function checarLiveItens() {
@@ -3552,7 +3935,9 @@
     function extrairMinutosDoHorarioExp(time) {
       const t = String(time || '').trim();
       if (!t) return null;
-      const m = t.match(/(\d{1,2})\s*[:hH]\s*(\d{2})?/);
+      // Regex com barras duplicadas: esta função vive dentro da template string
+      // do export, então \d precisa sobreviver à interpolação como \\d.
+      const m = t.match(/(\\d{1,2})\\s*[:hH]\\s*(\\d{2})?/);
       if (!m) return null;
       const h = parseInt(m[1], 10);
       const min = m[2] ? parseInt(m[2], 10) : 0;
@@ -3616,6 +4001,7 @@
 
     checarLiveItens();
     setInterval(checarLiveItens, checkIntervalMs);
+    montarPlayersTwitch();
   <\/script>
 </body>
 </html>`;
