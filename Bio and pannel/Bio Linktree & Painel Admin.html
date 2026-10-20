@@ -939,6 +939,21 @@
     // 'live_only' -> idem 'embed', mas só quando o canal estiver AO VIVO (Twitch).
     const MEDIA_PREVIEW_OPCOES = ['none', 'embed', 'live_only'];
 
+    // Padrões dos identificadores aceitos por plataforma. O id detectado na URL
+    // vai para `src=`/`onclick=`/URL de API: qualquer caractere fora destes
+    // padrões é rejeitado, para que uma URL maliciosa não consiga fechar o
+    // atributo e injetar HTML/JS no card.
+    function idMidiaSeguro(id, tipo) {
+      const s = String(id == null ? '' : id);
+      let re = null;
+      if (tipo === 'youtube') re = /^[A-Za-z0-9_-]{1,64}$/;
+      else if (tipo === 'twitch_channel') re = /^[A-Za-z0-9_]{1,50}$/;
+      else if (tipo === 'twitch_video') re = /^[A-Za-z0-9_-]{1,64}$/;
+      else if (tipo === 'instagram') re = /^[A-Za-z0-9_-]{1,64}$/;
+      if (!re || !re.test(s)) return '';
+      return s;
+    }
+
     // Detecta a mídia compatível com a URL do item. Retorna null quando a URL
     // não é de nenhuma plataforma suportada.
     //   { tipo: 'youtube',       id }
@@ -960,17 +975,17 @@
 
       // ---- YouTube ----
       if (host === 'youtu.be') {
-        const id = partes[0];
+        const id = idMidiaSeguro(partes[0], 'youtube');
         if (id) return { tipo: 'youtube', id: id };
         return null;
       }
       if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
         if (partes[0] === 'watch') {
-          const id = q.get('v');
+          const id = idMidiaSeguro(q.get('v'), 'youtube');
           if (id) return { tipo: 'youtube', id: id };
         }
         if (partes[0] === 'shorts' || partes[0] === 'live' || partes[0] === 'embed') {
-          const id = partes[1];
+          const id = idMidiaSeguro(partes[1], 'youtube');
           if (id) return { tipo: 'youtube', id: id };
         }
         return null;
@@ -978,18 +993,23 @@
 
       // ---- Twitch ----
       if (host === 'twitch.tv' || host === 'm.twitch.tv') {
-        if (partes[0] === 'videos' && partes[1]) return { tipo: 'twitch_video', id: partes[1] };
+        if (partes[0] === 'videos' && partes[1]) {
+          const id = idMidiaSeguro(partes[1], 'twitch_video');
+          if (id) return { tipo: 'twitch_video', id: id };
+          return null;
+        }
         if (partes[0] === 'videos' || partes[0] === 'directory' || partes[0] === 'download') return null;
         // Canal: primeiro segmento, ignorando segmentos reservados.
         const reservados = ['videos', 'directory', 'download', 'settings', 'subscriptions', 'inventory', 'wallet', 'drops', 'search', 'p', 'u', 'jobs', 'team', 'store', 'turbo', 'following'];
         const canal = partes[0];
         if (canal && !reservados.includes(canal.toLowerCase())) {
-          return { tipo: 'twitch_channel', id: canal.toLowerCase() };
+          const id = idMidiaSeguro(canal.toLowerCase(), 'twitch_channel');
+          if (id) return { tipo: 'twitch_channel', id: id };
         }
         return null;
       }
       if (host === 'clips.twitch.tv') {
-        const id = partes[0];
+        const id = idMidiaSeguro(partes[0], 'twitch_video');
         if (id) return { tipo: 'twitch_video', id: id };
         return null;
       }
@@ -997,11 +1017,13 @@
       // ---- Instagram ----
       if (host === 'instagram.com' || host === 'instagr.am') {
         if (partes[0] === 'p' || partes[0] === 'tv') {
-          if (partes[1]) return { tipo: 'instagram', tipoPost: 'p', id: partes[1] };
+          const id = idMidiaSeguro(partes[1], 'instagram');
+          if (id) return { tipo: 'instagram', tipoPost: 'p', id: id };
           return null;
         }
         if (partes[0] === 'reel' || partes[0] === 'reels') {
-          if (partes[1]) return { tipo: 'instagram', tipoPost: 'reel', id: partes[1] };
+          const id = idMidiaSeguro(partes[1], 'instagram');
+          if (id) return { tipo: 'instagram', tipoPost: 'reel', id: id };
           return null;
         }
         return null;
@@ -1033,10 +1055,14 @@
       const estiloArea = 'border-radius: 12px; overflow: hidden; margin-top: 12px;';
       const tam = isMockup ? 40 : 64;
       const fonte = isMockup ? 14 : 22;
+      // O id é revalidado aqui (e não só na detecção): esta função também é
+      // chamada com um `midia` montado fora do fluxo normal, e o id vai para
+      // `src=` e para um handler inline.
+      const id = idMidiaSeguro(midia.id, midia.tipo);
+      if (!id) return '';
 
       // ---- YouTube: fachada 16:9 + botão Play ----
       if (midia.tipo === 'youtube') {
-        const id = String(midia.id);
         const thumb = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
         const embed = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
         return `<div class="yt-wrap relative w-full" style="aspect-ratio: 16/9; background: #000; ${estiloArea}">
@@ -1050,7 +1076,7 @@
 
       // ---- Twitch canal ----
       if (midia.tipo === 'twitch_channel') {
-        const canal = String(midia.id);
+        const canal = id;
         const ehArquivo = (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:');
         // Em file:// (painel aberto do disco) e no mockup a Twitch bloqueia o
         // iframe sem domínio: mostra o preview oficial com badge AO VIVO.
@@ -1069,7 +1095,6 @@
 
       // ---- Twitch vídeo/clip: preview estático do próprio clipe ----
       if (midia.tipo === 'twitch_video') {
-        const id = String(midia.id);
         return `<div class="tw-wrap relative w-full" style="aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}">
           <img src="https://clips-media-assets2.twitch.tv/${id}-preview-480x272.jpg" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
         </div>`;
@@ -1078,7 +1103,6 @@
       // ---- Instagram ----
       if (midia.tipo === 'instagram') {
         const tipoPost = midia.tipoPost === 'reel' ? 'reel' : 'p';
-        const id = String(midia.id);
         const altura = isMockup ? 220 : 380;
         return `<div class="ig-wrap w-full" style="background: #000; ${estiloArea}">
           <iframe src="https://www.instagram.com/${tipoPost}/${id}/embed" width="100%" height="${altura}" title="Instagram" frameborder="0" scrolling="no" allowtransparency="true" style="display: block; width: 100%; height: ${altura}px; border: 0;"></iframe>
@@ -1096,7 +1120,13 @@
       if (!midia) return '';
       const estiloArea = 'border-radius: 12px; overflow: hidden; margin-top: 12px;';
       const modo = (item && item.mediaPreview) || 'none';
-      const id = String(midia.id);
+      // Revalida o id (ver idMidiaSeguro): ele vai para `src=` e para
+      // `data-tw-canal=`, e um id malicioso fecharia o atributo.
+      const id = idMidiaSeguro(midia.id, midia.tipo);
+      if (!id) return '';
+      // O id do item também é um atributo (id="liveMedia_<id>"): vem de um
+      // config importado, então precisa ser escapado.
+      const itemId = escapeHtml(String((item && item.id) || ''));
 
       // ---- YouTube: fachada 16:9 + botão Play ----
       if (midia.tipo === 'youtube') {
@@ -1116,7 +1146,7 @@
       if (midia.tipo === 'twitch_channel') {
         const canal = id;
         const oculto = modo === 'live_only';
-        return `<div id="liveMedia_${item.id}" data-tw-canal="${canal}" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}${oculto ? 'display: none;' : ''}">
+        return `<div id="liveMedia_${itemId}" data-tw-canal="${canal}" style="position: relative; width: 100%; aspect-ratio: 16/9; background: #0f0f11; ${estiloArea}${oculto ? 'display: none;' : ''}">
           <img class="tw-thumb" src="https://static-cdn.jtvnw.net/previews-ttv/live_user_${canal}-640x360.jpg" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover;">
         </div>`;
       }
@@ -1179,7 +1209,7 @@
       if (modo === 'none') return 'O card mostra apenas o botão normal.';
       if (midia.tipo === 'youtube') return 'Mostra a miniatura do vídeo no card; ao clicar no Play, o player é carregado no próprio lugar.';
       if (midia.tipo === 'twitch_channel') {
-        if (modo === 'live_only') return 'O player só aparece quando o canal da Twitch está AO VIVO.';
+        if (modo === 'live_only') return 'O player só aparece quando o canal da Twitch está AO VIVO — exige a sincronização de status de live ligada (que é ativada automaticamente ao escolher esta opção).';
         return 'Mostra o player da Twitch dentro do card.';
       }
       if (midia.tipo === 'twitch_video') return 'Mostra o player da Twitch (clipe/VOD) dentro do card.';
@@ -2755,7 +2785,16 @@
 
     function atualizarLinkCampo(index, campo, valor) {
       if (appConfig.links[index]) {
-        appConfig.links[index][campo] = valor;
+        const item = appConfig.links[index];
+        item[campo] = valor;
+        // 'live_only' só funciona se o item checar o status de live: sem isso o
+        // player nunca apareceria. Escolher a opção liga a sincronização;
+        // desligar a sincronização rebaixa a opção para 'embed'.
+        if (campo === 'mediaPreview' && valor === 'live_only') {
+          item.syncLiveStatus = true;
+        } else if (campo === 'syncLiveStatus' && !valor && item.mediaPreview === 'live_only') {
+          item.mediaPreview = 'embed';
+        }
         salvarConfiguracao();
         dispararAtualizacaoGeral();
       }
@@ -2924,6 +2963,9 @@
           const midiaItem = detectarMidiaUrl(item.url);
           if (!midiaItem) item.mediaPreview = 'none';
           else if (item.mediaPreview === 'live_only' && midiaItem.tipo !== 'twitch_channel') item.mediaPreview = 'embed';
+          // 'live_only' depende da checagem de live: um item com a opção mas
+          // sem `syncLiveStatus` nunca mostraria o player.
+          if (item.mediaPreview === 'live_only') item.syncLiveStatus = true;
         }
         if (!('barColor' in item)) item.barColor = "";
         else if (item.barColor && !/^#[0-9a-f]{6}$/i.test(item.barColor)) item.barColor = "";
@@ -3205,7 +3247,7 @@
       if (!appConfig.autoDetectLive) return;
 
       const alvos = (appConfig.links || [])
-        .filter(item => item.active && itemSuportaLive(item) && item.syncLiveStatus)
+        .filter(item => item.active && itemSuportaLive(item) && (item.syncLiveStatus || item.mediaPreview === 'live_only'))
         .map(item => ({ item, alvo: resolverPlataformaLive(item) }))
         .filter(x => x.alvo && x.alvo.config.url && x.alvo.identificador);
 
@@ -3396,11 +3438,14 @@
       mostrarToast("Link copiado para a área de transferência!");
     }
 
-    // Lista de alvos de live embutida no HTML exportado: só entra quem tem
+    // Lista de alvos de live embutida no HTML exportado: entra quem tem
     // `syncLiveStatus` ligado E plataforma com endpoint público disponível.
+    // Um item em modo 'live_only' também entra mesmo sem o checkbox ligado:
+    // o player dele só aparece quando o canal está no ar, então a checagem de
+    // live é parte do recurso — sem ela, o card ficaria vazio para sempre.
     function exportAlvosLive(cfg, canalPrincipal) {
       return (cfg.links || [])
-        .filter(l => l.active && itemSuportaLive(l) && l.syncLiveStatus)
+        .filter(l => l.active && itemSuportaLive(l) && (l.syncLiveStatus || l.mediaPreview === 'live_only'))
         .map(l => {
           const alvo = resolverPlataformaLive(l);
           if (!alvo || !alvo.config.url || !alvo.identificador) return null;
@@ -3428,7 +3473,11 @@
     // chevron fixo na ponta direita. Sem campos de imagem — isso é papel do tipo
     // 'imagem'. HTML com estilo inline (o arquivo exportado não tem Tailwind).
     function renderizarLinkExport(l, cfg) {
-      const alvoLive = l.syncLiveStatus ? resolverPlataformaLive(l) : null;
+      // O modo 'live_only' também precisa dos ids de live: o alvo do export
+      // usa esses ids para mostrar/esconder o player conforme o canal entra e
+      // sai do ar.
+      const querLive = l.syncLiveStatus || l.mediaPreview === 'live_only';
+      const alvoLive = querLive ? resolverPlataformaLive(l) : null;
       const monitoraLive = !!(alvoLive && alvoLive.config.url);
       const liveBadgeId = monitoraLive ? `liveBadge_${l.id}` : '';
       const liveSubId = monitoraLive ? `liveSub_${l.id}` : '';
