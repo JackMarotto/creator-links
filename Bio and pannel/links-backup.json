@@ -34,7 +34,7 @@
       "id": "s_youtube",
       "name": "YouTube",
       "icon": "fa-brands fa-youtube",
-      "url": "https://youtube.com/@omarotto",
+      "url": "https://youtube.com/@oMarottoVideos",
       "active": true,
       "hoverColor": "#ff0000"
     },
@@ -50,7 +50,7 @@
       "id": "s_x",
       "name": "Twitter / X",
       "icon": "fa-brands fa-x-twitter",
-      "url": "https://x.com/omarotto",
+      "url": "https://x.com/jacksonmarotto",
       "active": true,
       "hoverColor": "#000000"
     },
@@ -58,7 +58,7 @@
       "id": "s_instagram",
       "name": "Instagram",
       "icon": "fa-brands fa-instagram",
-      "url": "https://instagram.com/omarotto",
+      "url": "https://instagram.com/omarottovideos",
       "active": true,
       "hoverColor": "#ec27c2"
     },
@@ -66,7 +66,7 @@
       "id": "s_tiktok",
       "name": "TikTok",
       "icon": "fa-brands fa-tiktok",
-      "url": "https://tiktok.com/@omarotto",
+      "url": "https://tiktok.com/@omarottovideos",
       "active": true,
       "hoverColor": "#fd2666"
     },
@@ -102,7 +102,8 @@
       "syncLiveStatus": true,
       "livePlatform": "auto",
       "useFavicon": true,
-      "barColor": ""
+      "barColor": "",
+      "mediaPreview": "none"
     },
     {
       "id": "link_1791045432553",
@@ -126,7 +127,8 @@
       "syncLiveStatus": false,
       "livePlatform": "auto",
       "useFavicon": true,
-      "barColor": ""
+      "barColor": "",
+      "mediaPreview": "none"
     },
     {
       "id": "link_discord",
@@ -150,7 +152,8 @@
       "syncLiveStatus": false,
       "livePlatform": "auto",
       "useFavicon": true,
-      "barColor": ""
+      "barColor": "",
+      "mediaPreview": "none"
     },
     {
       "id": "link_setup",
@@ -174,7 +177,8 @@
       "syncLiveStatus": false,
       "livePlatform": "auto",
       "useFavicon": false,
-      "barColor": ""
+      "barColor": "",
+      "mediaPreview": "none"
     },
     {
       "id": "link_pix",
@@ -218,7 +222,8 @@
       "syncLiveStatus": false,
       "livePlatform": "auto",
       "useFavicon": false,
-      "barColor": ""
+      "barColor": "",
+      "mediaPreview": "none"
     },
     {
       "id": "sched_1791411213078",
