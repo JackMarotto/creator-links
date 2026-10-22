@@ -2193,12 +2193,10 @@
       schedule(item, isMockup) {
         const cor = getItemGlowColor(item);
         const rgb = hexToRgbTriplet(cor);
-        const primaria = appConfig.primaryColor || '#9146FF';
         const agora = new Date();
         const proxima = calcularProximaLive(item.scheduleDays, agora);
         const aoVivo = !!(appConfig.autoDetectLive && twitchLiveState.isLive);
         const dias = Array.isArray(item.scheduleDays) ? item.scheduleDays : [];
-        const diaAtual = agora.getDay();
 
         // --- Contador dinâmico ---
         let countdownHtml = '';
@@ -2229,11 +2227,13 @@
         }
 
         // --- Linha semanal (7 dias) ---
+        // O destaque do dia atual NÃO é gravado no HTML: ele depende de
+        // new Date() e o HTML exportado é um arquivo estático (baixado num dia
+        // e aberto em outro). Cada caixa carrega o índice do dia em
+        // `data-day-box` e a rotina atualizarDiaAtualSchedule aplica o
+        // destaque em tempo de execução.
         const gradeHtml = dias.map(dia => {
-          const ehHoje = Number(dia.day) === diaAtual;
-          const borda = ehHoje ? `2px solid ${primaria}` : '1px solid #27272a';
-          const fundo = ehHoje ? `rgba(${hexToRgbTriplet(primaria)}, 0.18)` : 'rgba(24,24,27,.72)';
-          const textoCor = ehHoje ? '#fff' : (dia.active ? '#d4d4d8' : '#71717a');
+          const textoCor = dia.active ? '#d4d4d8' : '#71717a';
           const lives = Array.isArray(dia.lives) ? dia.lives : [];
           const livesHtml = lives.length
             ? lives.map(l => `
@@ -2243,8 +2243,8 @@
               </div>`).join('')
             : `<span class="${isMockup ? 'text-[7px]' : 'text-[9px]'} font-mono text-zinc-600">—</span>`;
           return `
-            <div class="flex flex-col items-center ${isMockup ? 'px-1 py-1 gap-0.5' : 'px-1.5 py-1.5 gap-1'} rounded-lg" style="background:${fundo};border:${borda};">
-              <span class="${isMockup ? 'text-[8px]' : 'text-[10px]'} font-black" style="color:${ehHoje ? primaria : textoCor};">${escapeHtml(dia.label)}</span>
+            <div data-day-box="${Number(dia.day)}" class="flex flex-col items-center ${isMockup ? 'px-1 py-1 gap-0.5' : 'px-1.5 py-1.5 gap-1'} rounded-lg" style="background:rgba(24,24,27,.72);border:1px solid #27272a;">
+              <span data-day-label class="${isMockup ? 'text-[8px]' : 'text-[10px]'} font-black" style="color:${textoCor};">${escapeHtml(dia.label)}</span>
               ${livesHtml}
             </div>`;
         }).join('');
@@ -2725,13 +2725,65 @@
       dispararAtualizacaoGeral();
     }
 
+    // Aplica o destaque do dia atual nas 7 caixas da agenda.
+    //
+    // O HTML gerado nunca grava o dia de hoje: no index.html exportado isso
+    // congelaria o destaque na data em que o arquivo foi baixado. Cada caixa
+    // carrega o índice do dia em `data-day-box` e esta routine marca, em
+    // tempo de execução, a caixa correspondente a new Date().getDay().
+    function atualizarDiaAtualSchedule(wrap, dias, primaria) {
+      if (!wrap || !wrap.querySelectorAll) return;
+      const hoje = new Date().getDay();
+      const cor = primaria || appConfig.primaryColor || '#9146FF';
+      // Conversão local de hex para rgb: a cópia desta função que vive no
+      // index.html exportado roda isolada, sem o hexToRgbTriplet do painel.
+      let h = String(cor || '').trim().replace('#', '');
+      if (h.length === 3) h = h.split('').map(c => c + c).join('');
+      const rgb = /^[0-9a-fA-F]{6}$/.test(h)
+        ? `${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}`
+        : '145, 70, 255';
+      const lista = Array.isArray(dias) ? dias : [];
+      const boxes = wrap.querySelectorAll('[data-day-box]');
+      Array.prototype.forEach.call(boxes, box => {
+        const idx = Number(box.getAttribute('data-day-box'));
+        const dia = lista.find(d => Number(d.day) === idx);
+        const ehHoje = idx === hoje;
+        box.style.border = ehHoje ? `2px solid ${cor}` : '1px solid #27272a';
+        box.style.background = ehHoje ? `rgba(${rgb}, 0.18)` : 'rgba(24,24,27,.72)';
+        const label = box.querySelector('[data-day-label]');
+        if (label) {
+          label.style.color = ehHoje ? cor : (dia && dia.active ? '#d4d4d8' : '#71717a');
+        }
+      });
+    }
+
+    // Aplica o destaque do dia atual em todos os cards de agenda visíveis.
+    // Roda no render e periodicamente (virada de meia-noite muda o dia).
+    let diaScheduleIntervalId = null;
+    function atualizarDiasSchedule() {
+      const primaria = appConfig.primaryColor || '#9146FF';
+      (appConfig.links || []).filter(l => l.active && l.type === 'schedule').forEach(item => {
+        const wraps = document.querySelectorAll(`[data-countdown-wrap="${item.id}"], [data-countdown-wrap="mock_${item.id}"]`);
+        Array.prototype.forEach.call(wraps, wrap => {
+          atualizarDiaAtualSchedule(wrap, item.scheduleDays, primaria);
+        });
+      });
+    }
+
     // Atualiza os blocos de countdown de todos os itens schedule visíveis.
     // Um único setInterval para todos, sem reconstruir o DOM.
     let countdownIntervalId = null;
     function agendarCountdowns() {
       if (countdownIntervalId) clearInterval(countdownIntervalId);
-      const temSchedule = (appConfig.links || []).some(l => l.active && l.type === 'schedule' && l.showCountdown !== false);
+      if (diaScheduleIntervalId) clearInterval(diaScheduleIntervalId);
+      const temSchedule = (appConfig.links || []).some(l => l.active && l.type === 'schedule');
       if (!temSchedule) return;
+      // O destaque do dia atual é aplicado já no render e a cada minuto
+      // (a virada de meia-noite troca o dia destacado).
+      atualizarDiasSchedule();
+      diaScheduleIntervalId = setInterval(atualizarDiasSchedule, 60000);
+      const temScheduleComCountdown = (appConfig.links || []).some(l => l.active && l.type === 'schedule' && l.showCountdown !== false);
+      if (!temScheduleComCountdown) return;
       countdownIntervalId = setInterval(() => {
         const aoVivo = !!(appConfig.autoDetectLive && twitchLiveState.isLive);
         (appConfig.links || []).filter(l => l.active && l.type === 'schedule').forEach(item => {
@@ -3636,10 +3688,7 @@
     function renderizarScheduleExport(item, cfg) {
       const cor = (item.glowColor && item.glowColor.trim()) || cfg.primaryColor || '#9146FF';
       const rgb = hexToRgbTriplet(cor);
-      const primaria = cfg.primaryColor || '#9146FF';
-      const primariaRgb = hexToRgbTriplet(primaria);
       const dias = Array.isArray(item.scheduleDays) ? item.scheduleDays : [];
-      const diaAtual = new Date().getDay();
       const agora = new Date();
       const proxima = calcularProximaLive(dias, agora);
       const c = proxima ? formatarCountdownBlocos(proxima.alvo - agora) : { d: '00', h: '00', m: '00', s: '00' };
@@ -3650,11 +3699,11 @@
                 <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#a1a1aa;margin-top:2px;">${rot}</span>
               </div>`;
 
+      // O destaque do dia atual NÃO é gravado no HTML exportado: o arquivo é
+      // estático e pode ser aberto em outro dia. Cada caixa carrega o índice
+      // em `data-day-box` e o script do export destaca o dia em runtime.
       const gradeHtml = dias.map(dia => {
-        const ehHoje = Number(dia.day) === diaAtual;
-        const borda = ehHoje ? `2px solid ${primaria}` : '1px solid #27272a';
-        const fundo = ehHoje ? `rgba(${primariaRgb}, 0.18)` : 'rgba(24,24,27,.72)';
-        const corTexto = ehHoje ? primaria : (dia.active ? '#d4d4d8' : '#71717a');
+        const corTexto = dia.active ? '#d4d4d8' : '#71717a';
         const lives = Array.isArray(dia.lives) ? dia.lives : [];
         const livesHtml = lives.length
           ? lives.map(l => `
@@ -3664,8 +3713,8 @@
               </div>`).join('')
           : `<span style="font-size:9px;font-family:monospace;color:#52525b;">—</span>`;
         return `
-            <div style="display:flex;flex-direction:column;align-items:center;padding:6px 4px;border-radius:8px;background:${fundo};border:${borda};gap:2px;">
-              <span style="font-size:10px;font-weight:900;color:${corTexto};">${escapeHtml(dia.label)}</span>
+            <div data-day-box="${Number(dia.day)}" style="display:flex;flex-direction:column;align-items:center;padding:6px 4px;border-radius:8px;background:rgba(24,24,27,.72);border:1px solid #27272a;gap:2px;">
+              <span data-day-label style="font-size:10px;font-weight:900;color:${corTexto};">${escapeHtml(dia.label)}</span>
               ${livesHtml}
             </div>`;
       }).join('');
@@ -3831,6 +3880,7 @@
 
   <script>
     const channelName = "${channel}";
+    const primaryColor = ${JSON.stringify(cfg.primaryColor || '#9146FF')};
     const autoDetect = ${cfg.autoDetectLive ? 'true' : 'false'};
     const checkIntervalMs = ${cfg.checkIntervalMs || 60000};
     const statusTag = ${JSON.stringify(cfg.statusTag || 'AO VIVO NA TWITCH')};
@@ -4017,12 +4067,43 @@
       return null;
     }
     function pad2(n) { return String(n).padStart(2, '0'); }
+    // Aplica o destaque do dia atual nas 7 caixas da agenda.
+    //
+    // O HTML exportado é um arquivo estático: o dia de hoje não pode estar
+    // gravado no markup, senão o destaque ficaria congelado na data em que o
+    // index.html foi baixado. Cada caixa carrega o índice em data-day-box e
+    // esta rotina marca a caixa de new Date().getDay() em tempo de execução.
+    function atualizarDiaAtualSchedule(wrap, dias, primaria) {
+      if (!wrap || !wrap.querySelectorAll) return;
+      const hoje = new Date().getDay();
+      const cor = primaria || primaryColor || '#9146FF';
+      let h = String(cor || '').trim().replace('#', '');
+      if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+      const rgb = /^[0-9a-fA-F]{6}$/.test(h)
+        ? parseInt(h.slice(0, 2), 16) + ', ' + parseInt(h.slice(2, 4), 16) + ', ' + parseInt(h.slice(4, 6), 16)
+        : '145, 70, 255';
+      const lista = Array.isArray(dias) ? dias : [];
+      const boxes = wrap.querySelectorAll('[data-day-box]');
+      Array.prototype.forEach.call(boxes, function (box) {
+        const idx = Number(box.getAttribute('data-day-box'));
+        const dia = lista.find(function (d) { return Number(d.day) === idx; });
+        const ehHoje = idx === hoje;
+        box.style.border = ehHoje ? '2px solid ' + cor : '1px solid #27272a';
+        box.style.background = ehHoje ? 'rgba(' + rgb + ', 0.18)' : 'rgba(24,24,27,.72)';
+        const label = box.querySelector('[data-day-label]');
+        if (label) {
+          label.style.color = ehHoje ? cor : (dia && dia.active ? '#d4d4d8' : '#71717a');
+        }
+      });
+    }
     function atualizarCountdownsExport() {
       const aoVivo = !!(autoDetect && window.__twitchLiveState && window.__twitchLiveState.isLive);
       SCHEDULE_EXPORT.forEach(item => {
-        if (!item.showCountdown) return;
         const wrap = document.querySelector('[data-countdown-wrap="export_' + item.id + '"]');
         if (!wrap) return;
+        // O destaque do dia atual é aplicado a cada item, mesmo sem countdown.
+        atualizarDiaAtualSchedule(wrap, item.dias, primaryColor);
+        if (!item.showCountdown) return;
         const proxima = calcularProximaLiveExp(item.dias, new Date());
         const alvoEl = wrap.querySelector('[data-countdown-alvo]');
         const blocos = {
